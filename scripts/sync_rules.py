@@ -129,6 +129,8 @@ def operate(command, root, fmt='all', fetch=get):
             result = verify(root, state['previous'])
             atomic(root / 'current.json', {'current': state['previous'], 'previous': state['current']})
             return {'status': 'rolled_back', **result}
+        if state['current']:
+            verify(root, state['current'])
         sha = json.loads(fetch('https://api.github.com/repos/' + REPO + '/commits/release'))['sha']
         if not isinstance(sha, str) or not SHA.fullmatch(sha): raise ValueError('invalid_release_sha')
         raw = fetch(BASE + sha + '/manifest.json'); m = json.loads(raw)

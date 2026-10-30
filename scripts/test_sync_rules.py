@@ -61,6 +61,13 @@ class SyncTests(unittest.TestCase):
     def test_two_generations_retained(self):
         for x in 'abc':self.sha=x*40;self.sync()
         self.assertEqual(len(list((self.root/'generations').iterdir())),2)
+    def test_corrupt_current_cannot_replace_valid_previous(self):
+        self.sync();self.sha='b'*40;second=self.sync()
+        (Path(second['directory'])/'index.json').write_bytes(b'corrupt')
+        before=(self.root/'current.json').read_bytes();self.sha='c'*40
+        with self.assertRaises(ValueError):self.sync()
+        self.assertEqual((self.root/'current.json').read_bytes(),before)
+        self.assertEqual(operate('rollback',self.root)['generation'],'a'*40+'-all')
     def test_pointer_replace_failure_preserves_current(self):
         self.sync(); before=(self.root/'current.json').read_bytes(); self.sha='b'*40
         with patch('sync_rules.atomic',side_effect=OSError('write denied')):
