@@ -2,7 +2,37 @@
 
 [![自动构建](https://github.com/Heibai0502/agent-route/actions/workflows/run.yml/badge.svg)](https://github.com/Heibai0502/agent-route/actions/workflows/run.yml)
 
-同一批来源，输出 **Mihomo / Clash、Surge / Shadowrocket、sing-box** 原生规则格式。共用规则、各用自己的节点；公开读取无需账号或 API key。
+<a id="about"></a>
+
+## 这是什么项目？
+
+AgentRoute 是一个**自动更新、供大家共用的网络分流规则仓库**。
+
+我在 [Loyalsoldier](https://github.com/Loyalsoldier)、[v2fly](https://github.com/v2fly/domain-list-community)、[gaoyifan](https://github.com/gaoyifan/china-operator-ip) 等开源作者和社区成果的基础上，整理规则来源、处理名单冲突，转换成不同客户端能用的格式，并加上自动更新、校验和 Agent 接入说明。感谢这些项目的持续维护，完整来源与许可见 [上游署名](#上游项目与作者)和 [NOTICE](NOTICE.md)。
+
+## 自动更新什么？
+
+| 规则内容 | 默认示例中的用途 |
+| --- | --- |
+| 中国大陆 IPv4 / IPv6 地址段 | 为中国 IP 提供直连兜底 |
+| 国内域名 | 直接使用本地网络访问 |
+| 海外域名 | 使用你自己的代理节点访问 |
+| 内网和私有域名 | 保留路由器、局域网等本地访问 |
+| 广告域名 | 拦截名单中的广告请求 |
+
+仓库每天计划自动更新，校验失败保留上一份有效规则。接入后，客户端通常每 24 小时检查更新；具体时间和规则优先级见 [接入说明](docs/CLIENTS.md)。
+
+## 直连、绕过中国、美国节点有什么区别？
+
+- **直连**：使用你当前的网络出口访问，不经过代理节点。
+- **绕过中国**：这里指国内流量绕过代理，按国内域名和中国 IP 规则直连；海外及其他未命中流量默认走代理。用户自己的明确例外优先。
+- **使用美国节点**：如果希望海外流量从美国出口访问，需要把代理策略指向你自己的美国节点或节点组。这仍然是代理访问。项目目前没有单独的美国 IP 直连名单；指定网站直连可由你或 Agent 添加本地例外，能否直连取决于你的网络。
+
+**节点由你自己提供**，例如已有机场订阅或自建节点。本项目提供的是规则与接入工具，不提供节点、账号或机场订阅，也不会自动替换你的节点。
+
+## 怎么使用？
+
+支持 **Mihomo / Clash Meta、Surge / Shadowrocket、sing-box**，公开读取无需账号或 API key。你可以参考示例接入，也可以直接把下面的提示词交给自己的 Agent，让它保留你的节点、配置自动同步，并按指南检查 DNS 和 WebRTC 防护。
 
 **给其他 Agent：** 读取 [AGENTS.md](AGENTS.md)，按 [index.json](https://raw.githubusercontent.com/Heibai0502/agent-route/release/index.json) 选择格式，并阅读 [DNS 与 WebRTC 防护指南](docs/DNS-WEBRTC.md)。不要把本仓库当作机场订阅导入。
 
