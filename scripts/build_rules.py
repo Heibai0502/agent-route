@@ -4,6 +4,7 @@ import datetime
 import hashlib
 import ipaddress
 import json
+import os
 from pathlib import Path
 import re
 import time
@@ -25,7 +26,11 @@ DOMAIN = re.compile(r'^[-_a-zA-Z0-9]+(?:\.[-_a-zA-Z0-9]+)*$')
 def fetch(url):
     for attempt in range(3):
         try:
-            request = urllib.request.Request(url, headers={'User-Agent': 'agentroute-rules-builder'})
+            headers = {'User-Agent': 'agentroute-rules-builder'}
+            # Anonymous API calls share the CI runner's rate limit. The token never goes to raw downloads.
+            if url.startswith('https://api.github.com/') and os.environ.get('GITHUB_TOKEN'):
+                headers['Authorization'] = 'Bearer ' + os.environ['GITHUB_TOKEN']
+            request = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(request, timeout=30) as response:
                 limit = 16 * 1024 * 1024
                 data = response.read(limit + 1)
@@ -119,34 +124,7 @@ def private_domains(text):
     return exact, suffix
 
 
-def integration_digest(content):
-    """Digest of everything a downstream agent acts on; the number must move when it changes."""
-    digest = hashlib.sha256()
-    for name in sorted(content):
-        digest.update(name.encode() + b'\0' + hashlib.sha256((ROOT / name).read_bytes()).digest())
-    return digest.hexdigest()
-
-
-def load_integration():
-    value = json.loads((ROOT / 'integration.json').read_text(encoding='utf-8'))
-    if not isinstance(value.get('version'), int) or value['version'] < 1:
-        raise ValueError('integration_version_invalid')
-    versions = [change.get('version') for change in value['changes']]
-    if versions != list(range(value['version'], value['version'] - len(versions), -1)):
-        raise ValueError('integration_changes_not_contiguous')
-    for change in value['changes']:
-        if change.get('class') not in ('docs', 'tool', 'config', 'breaking'):
-            raise ValueError('integration_change_class_invalid')
-        if not all(isinstance(change.get(key), str) and 0 < len(change[key]) <= 400 for key in ('date', 'summary', 'action')):
-            raise ValueError('integration_change_text_invalid')
-    expected = integration_digest(value['content'])
-    if value.get('content_sha256') != expected:
-        raise ValueError('integration_content_changed_bump_version_and_set_content_sha256:' + expected)
-    return value
-
-
 def build(raw, output, versions=None):
-    integration = load_integration()
     ad_exact, ad_suffix = advertising_domains(raw['advertising_domains'])
     exact, suffix = domains(raw['china_domains'])
     if not (len(exact) + len(suffix) > 1000):
@@ -211,7 +189,7 @@ def build(raw, output, versions=None):
     public_files = export(output, {
         'direct': (exact, suffix), 'proxy': (foreign_exact, foreign_suffix),
         'private': (private_exact, private_suffix), 'reject': (ad_exact, ad_suffix),
-    }, ordered_networks, generated_at, integration)
+    }, ordered_networks, generated_at)
     manifest = {
         'generated_at_utc': generated_at,
         'scope': 'domestic_direct_and_adblock', 'sources': SOURCES,
@@ -224,7 +202,6 @@ def build(raw, output, versions=None):
                   for name in ['direct.list', 'direct.json', 'direct.domains', 'direct.ipcidr',
                                'reject.domains', 'reject.list', 'reject.json', 'private.domains', 'proxy-source.txt']},
         'application_or_country_groups_generated': False,
-        'client_templates_generated': False,
         'public_formats_version': 1,
     }
     manifest['files'].update(public_files)
@@ -232,8 +209,7 @@ def build(raw, output, versions=None):
     manifest['source_versions'] = versions or {}
     manifest['skipped_syntax'] = {key: {kind: sum(line.strip().startswith(kind + ':') for line in text.splitlines()) for kind in ('regexp', 'keyword')} for key, text in raw.items() if key != 'china_ip'}
     manifest['freshness_scope'] = 'this_publication_not_upstream_commit_age'
-    # One release SHA is self-contained: data, templates, guides and the tool that reads them.
-    for name in ['sources.json', 'NOTICE.md', 'integration.json'] + integration['content'] + [copy['path'] for p in REGISTRY['projects'] for copy in p.get('license_copies', [])]:
+    for name in ['sources.json', 'NOTICE.md'] + [copy['path'] for p in REGISTRY['projects'] for copy in p.get('license_copies', [])]:
         data = (ROOT / name).read_bytes()
         (output / name).parent.mkdir(parents=True, exist_ok=True)
         (output / name).write_bytes(data)

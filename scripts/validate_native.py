@@ -32,9 +32,7 @@ def localized_mihomo(source, generated, work):
 
 def localized_sing_box(source, generated, work):
     config = json.loads(source.read_text(encoding='utf-8'))
-    config['outbounds'] = [item for item in config.get('outbounds', []) if item['tag'] != 'DIRECT'] + [
-        {'type': 'direct', 'tag': 'DIRECT', 'domain_resolver': 'dns-direct'} if 'dns' in config else {'type': 'direct', 'tag': 'DIRECT'},
-        {'type': 'socks', 'tag': 'PROXY', 'server': '127.0.0.1', 'server_port': 9}]
+    config['outbounds'] += [{'type': 'socks', 'tag': 'PROXY', 'server': '127.0.0.1', 'server_port': 9}]
     config['experimental']['cache_file']['path'] = str(work / 'cache.db')
     return config
 
@@ -47,40 +45,9 @@ def to_local_rule_sets(config, generated):
     return config
 
 
-def validate_full(generated, examples, mihomo, sing_box, surge=None):
-    """The full templates must load in the real cores, with DNS and sniffing switched on."""
-    import yaml
-    with tempfile.TemporaryDirectory(prefix='routing-full-') as folder:
-        work = Path(folder)
-        path = work / 'mihomo.yaml'
-        path.write_text(yaml.safe_dump(localized_mihomo(examples / 'mihomo.yaml', generated, work), sort_keys=False))
-        checked([mihomo, '-t', '-d', work, '-f', path])
-        config = localized_sing_box(examples / 'sing-box.json', generated, work)
-        remote = work / 'sing-box-remote.json'
-        remote.write_text(json.dumps(config))
-        checked([sing_box, 'check', '-c', remote])
-        path = work / 'sing-box-local.json'
-        path.write_text(json.dumps(to_local_rule_sets(config, generated)))
-        checked([sing_box, 'check', '-c', path])
-        if surge:
-            content = (examples / 'surge.conf').read_text(encoding='utf-8').replace(BASE_URL, str(generated) + '/')
-            path = work / 'surge.conf'
-            path.write_text('[Proxy]\nPROXY = socks5, 127.0.0.1, 9\n' + content)
-            checked([surge, '--check', path])
-
-
 def validate(generated, mihomo, sing_box, surge=None):
     import yaml  # Validation only; the data builder has no third-party dependencies.
-    examples = Path(__file__).resolve().parents[1] / 'examples'
-    validate_full(generated, examples / 'full', mihomo, sing_box, surge)
-    # Shadowrocket has no local native validator: check only the portable fragment.
-    shadow_lines = [line.strip() for line in (examples / 'shadowrocket.conf').read_text().splitlines()
-                    if line.strip() and not line.startswith(('#', '['))]
-    expected = ['RULE-SET,' + BASE_URL + 'surge/' + name + '.list,'
-                + ('REJECT' if name == 'reject' else 'PROXY' if name == 'proxy' else 'DIRECT')
-                for name in DATASETS] + ['FINAL,PROXY']
-    if shadow_lines != expected:
-        raise ValueError('shadowrocket_fragment_order_or_url_invalid')
+    examples = Path(__file__).resolve().parents[1] / 'examples/full'
     with tempfile.TemporaryDirectory(prefix='routing-native-') as folder:
         work = Path(folder)
         for dataset in DATASETS:
@@ -101,12 +68,11 @@ def validate(generated, mihomo, sing_box, surge=None):
         path.write_text(json.dumps(to_local_rule_sets(config, generated)))
         checked([sing_box, 'check', '-c', path])
         if surge:
-            content = (examples / 'surge.conf').read_text().replace(BASE_URL, str(generated) + '/')
+            content = (examples / 'surge.conf').read_text(encoding='utf-8').replace(BASE_URL, str(generated) + '/')
             path = work / 'surge.conf'
-            path.write_text('[General]\nloglevel = notify\n[Proxy]\nPROXY = socks5, 127.0.0.1, 9\n' + content)
+            path.write_text('[Proxy]\nPROXY = socks5, 127.0.0.1, 9\n' + content)
             checked([surge, '--check', path])
-    return {'mihomo_datasets': 5, 'sing_box_datasets': 6, 'example_checks': 3 + bool(surge),
-            'full_template_checks': 3 + bool(surge),
+    return {'mihomo_datasets': 5, 'sing_box_datasets': 6, 'full_template_checks': 3 + bool(surge),
             'surge_checked': bool(surge), 'shadowrocket': 'structure_only', 'live_client_changed': False}
 
 

@@ -7,7 +7,6 @@ import unittest
 
 import yaml
 
-from build_rules import integration_digest, load_integration
 from public_formats import BASE_URL, DATASETS
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -93,15 +92,10 @@ class TemplateTests(unittest.TestCase):
         self.assertEqual(config['dns']['rules'][1], {'rule_set': ['sr-private'], 'server': 'dns-local'})
 
 
-class ChannelTests(unittest.TestCase):
-    def test_channel_matches_content(self):
-        value = load_integration()
-        self.assertEqual(value['content_sha256'], integration_digest(value['content']))
-        self.assertTrue(set(value['content']) >= {'AGENTS.md', 'docs/UPDATES.md', 'scripts/sync_rules.py'})
-        self.assertTrue({p.relative_to(ROOT).as_posix() for p in FULL.iterdir()} <= set(value['content']))
-
+class PublishedTextTests(unittest.TestCase):
     def test_published_text_has_no_private_or_internal_wording(self):
-        names = load_integration()['content'] + ['README.md', 'scripts/build_rules.py', 'docs/MAINTAINING.md']
+        names = ['README.md', 'AGENTS.md', 'scripts/build_rules.py', 'scripts/sync_rules.py', *map(str, (p.relative_to(ROOT) for p in (ROOT / 'docs').glob('*.md'))),
+                 *map(str, (p.relative_to(ROOT) for p in FULL.iterdir()))]
         for name in names:
             text = (ROOT / name).read_text(encoding='utf-8')
             with self.subTest(name=name):
