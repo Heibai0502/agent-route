@@ -163,23 +163,23 @@ def build(raw, output, versions=None):
     rules += ['DOMAIN-SUFFIX,' + name for name in sorted(suffix)]
     rules += [('IP-CIDR6' if ':' in network else 'IP-CIDR') + ',' + network
               for network in ordered_networks]
-    output / 'direct.list'.write_bytes(('\n'.join(rules) + '\n').encode("utf-8"))
-    output / 'direct.domains'.write_bytes(('\n'.join(sorted(exact) + ['.' + name for name in sorted(suffix)]) + '\n').encode("utf-8"))
-    output / 'private.domains'.write_bytes(('\n'.join(sorted(private_exact) + ['.' + name for name in sorted(private_suffix)]) + '\n').encode("utf-8"))
+    (output / 'direct.list').write_bytes(('\n'.join(rules) + '\n').encode("utf-8"))
+    (output / 'direct.domains').write_bytes(('\n'.join(sorted(exact) + ['.' + name for name in sorted(suffix)]) + '\n').encode("utf-8"))
+    (output / 'private.domains').write_bytes(('\n'.join(sorted(private_exact) + ['.' + name for name in sorted(private_suffix)]) + '\n').encode("utf-8"))
     # Preserve the exact foreign input used for conflict removal in this build.
     # Consumers must not combine this generation with a moving upstream branch.
-    output / 'proxy-source.txt'.write_bytes((raw['foreign_domains']).encode("utf-8"))
-    output / 'direct.ipcidr'.write_bytes(('\n'.join(
+    (output / 'proxy-source.txt').write_bytes((raw['foreign_domains']).encode("utf-8"))
+    (output / 'direct.ipcidr').write_bytes(('\n'.join(
         ('IP-CIDR6' if ':' in network else 'IP-CIDR') + ',' + network for network in ordered_networks) + '\n').encode("utf-8"))
     source = {'version': 3, 'rules': [{'domain': sorted(exact)},
                                      {'domain_suffix': sorted(suffix)},
                                      {'ip_cidr': ordered_networks}]}
-    output / 'direct.json'.write_bytes((json.dumps(source, separators=(',', ':')) + '\n').encode("utf-8"))
-    output / 'reject.domains'.write_bytes(('\n'.join(ad_exact + ['.' + name for name in ad_suffix]) + '\n').encode("utf-8"))
-    output / 'reject.list'.write_bytes(('\n'.join(['DOMAIN,' + name for name in ad_exact] +
+    (output / 'direct.json').write_bytes((json.dumps(source, separators=(',', ':')) + '\n').encode("utf-8"))
+    (output / 'reject.domains').write_bytes(('\n'.join(ad_exact + ['.' + name for name in ad_suffix]) + '\n').encode("utf-8"))
+    (output / 'reject.list').write_bytes(('\n'.join(['DOMAIN,' + name for name in ad_exact] +
                                                 ['DOMAIN-SUFFIX,' + name for name in ad_suffix]) + '\n').encode("utf-8"))
     ad_conditions = ([{'domain': ad_exact}] if ad_exact else []) + ([{'domain_suffix': ad_suffix}] if ad_suffix else [])
-    output / 'reject.json'.write_bytes((json.dumps({'version': 3, 'rules': ad_conditions}, separators=(',', ':')) + '\n').encode("utf-8"))
+    (output / 'reject.json').write_bytes((json.dumps({'version': 3, 'rules': ad_conditions}, separators=(',', ':')) + '\n').encode("utf-8"))
     generated_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
     public_files = export(output, {
         'direct': (exact, suffix), 'proxy': (foreign_exact, foreign_suffix),
@@ -210,7 +210,7 @@ def build(raw, output, versions=None):
         (output / name).parent.mkdir(parents=True, exist_ok=True)
         (output / name).write_bytes(data)
         manifest['files'][name] = hashlib.sha256(data).hexdigest()
-    output / 'manifest.json'.write_bytes((json.dumps(manifest, indent=2) + '\n').encode("utf-8"))
+    (output / 'manifest.json').write_bytes((json.dumps(manifest, indent=2) + '\n').encode("utf-8"))
     if not ({p.relative_to(output).as_posix() for p in output.rglob('*') if p.is_file()} == set(manifest['files']) | {'manifest.json'}):
         raise ValueError('generation_inventory_invalid')
     return manifest
