@@ -38,11 +38,14 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - name: Build and validate the direct dataset
+      - name: Run the unit tests
         run: |
           python3 -m pip install --disable-pip-version-check 'PyYAML==6.0.3'
           python3 -B -m unittest discover -s scripts -p 'test_*.py'
-          python3 scripts/build_rules.py
+      - name: Build and validate the direct dataset
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/build_rules.py
       - name: Verify with pinned official native clients
         run: |
           set -euo pipefail
@@ -66,11 +69,14 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - name: Build and validate the direct dataset
+      - name: Run the unit tests
         run: |
           python3 -m pip install --disable-pip-version-check 'PyYAML==6.0.3'
           python3 -B -m unittest discover -s scripts -p 'test_*.py'
-          python3 scripts/build_rules.py
+      - name: Build and validate the direct dataset
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/build_rules.py
       - name: Verify with pinned official native clients
         run: |
           set -euo pipefail
@@ -96,6 +102,6 @@ jobs:
           cp LICENSE "$publish_dir/"
           git -C "$publish_dir" config user.name github-actions[bot]
           git -C "$publish_dir" config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git -C "$publish_dir" add direct.list direct.json direct.domains direct.ipcidr reject.domains reject.list reject.json private.domains proxy-source.txt manifest.json index.json sources.json NOTICE.md integration.json AGENTS.md docs examples scripts licenses surge mihomo sing-box LICENSE
+          git -C "$publish_dir" add direct.list direct.json direct.domains direct.ipcidr reject.domains reject.list reject.json private.domains proxy-source.txt manifest.json index.json sources.json NOTICE.md licenses surge mihomo sing-box LICENSE
           git -C "$publish_dir" commit -m "Publish one validated routing-data generation"
           git -C "$publish_dir" push origin HEAD:release --force-with-lease="refs/heads/release:$expected"

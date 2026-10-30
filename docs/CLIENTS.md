@@ -4,14 +4,14 @@
 
 ## 选模板
 
-| 客户端 | 完整模板（推荐） | 只含规则的片段 | 规则格式 |
-| --- | --- | --- | --- |
-| Mihomo / Clash Meta / FlClash / Clash Verge Rev | [full/mihomo.yaml](../examples/full/mihomo.yaml) | [mihomo.yaml](../examples/mihomo.yaml) | YAML `payload`，域名 `behavior: domain`，IP `ipcidr` |
-| Surge | [full/surge.conf](../examples/full/surge.conf) | [surge.conf](../examples/surge.conf) | 无策略列的 `RULE-SET` 文本 |
-| Shadowrocket | [full/shadowrocket.conf](../examples/full/shadowrocket.conf) | [shadowrocket.conf](../examples/shadowrocket.conf) | 同 Surge；刷新周期在 App 内设置 |
-| sing-box | [full/sing-box.json](../examples/full/sing-box.json) | [sing-box.json](../examples/sing-box.json) | JSON source rule-set version 3 |
+| 客户端 | 模板 | 规则格式 |
+| --- | --- | --- |
+| Mihomo / Clash Meta / FlClash / Clash Verge Rev | [full/mihomo.yaml](../examples/full/mihomo.yaml) | YAML `payload`，域名 `behavior: domain`，IP `ipcidr` |
+| Surge | [full/surge.conf](../examples/full/surge.conf) | 无策略列的 `RULE-SET` 文本 |
+| Shadowrocket | [full/shadowrocket.conf](../examples/full/shadowrocket.conf) | 同 Surge；刷新周期在 App 内设置 |
+| sing-box | [full/sing-box.json](../examples/full/sing-box.json) | JSON source rule-set version 3 |
 
-完整模板包含 DNS、嗅探、DNS 服务器路由和完整规则顺序。只有当用户的 DNS 已按 [DNS-WEBRTC](DNS-WEBRTC.md) 配好，才用只含规则的片段。
+模板包含 DNS、嗅探、DNS 服务器路由和完整规则顺序。用户的 DNS 已按 [DNS-WEBRTC](DNS-WEBRTC.md) 配好时，只取 `AgentRoute managed` 标记之间的规则即可。
 
 <a id="baseline"></a>
 
@@ -113,7 +113,7 @@
 
 规则每天 **UTC+8 06:30** 计划构建，调度可能延迟，以 manifest 时间为准。每次先跑测试，再生成并通过官方 Mihomo / sing-box 原生检查，最后一次性切换 `release` 分支。失败时不发布，旧规则仍然可用。
 
-客户端按远程地址约每 24 小时刷新，各设备刷新时刻不同。模板和文档如何跟进上游，见 [UPDATES](UPDATES.md)。
+客户端按远程地址约每 24 小时刷新，各设备刷新时刻不同。
 
 ## 兼容旧消费者
 

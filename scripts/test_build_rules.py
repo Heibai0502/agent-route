@@ -2,11 +2,13 @@
 import hashlib
 import ipaddress
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import MagicMock, patch
 
-from build_rules import build, private_domains
+from build_rules import build, fetch, private_domains
 
 
 class SourceGenerationTests(unittest.TestCase):
@@ -26,6 +28,16 @@ class SourceGenerationTests(unittest.TestCase):
             'advertising_domains': '\n'.join(['domain:doubleclick.net']
                 + ['domain:ad' + str(i) + '.example' for i in range(1001)]) + '\n',
         }
+
+    def test_token_is_sent_only_to_the_api(self):
+        response = MagicMock(status=200)
+        response.__enter__.return_value = response
+        response.read.return_value = b'data'
+        with patch.dict(os.environ, {'GITHUB_TOKEN': 'token'}), patch('urllib.request.urlopen', return_value=response) as opened:
+            fetch('https://api.github.com/repos/a/b/commits/c')
+            self.assertEqual(opened.call_args[0][0].get_header('Authorization'), 'Bearer token')
+            fetch('https://raw.githubusercontent.com/a/b/c/d')
+            self.assertIsNone(opened.call_args[0][0].get_header('Authorization'))
 
     def test_generation_preserves_foreign_input_and_private_matching_semantics(self):
         raw = self.fixture()

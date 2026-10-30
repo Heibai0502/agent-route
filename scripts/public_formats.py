@@ -44,7 +44,7 @@ def outside_networks(networks):
     return sorted(result, key=lambda n: (n.version, int(n.network_address), n.prefixlen))
 
 
-def export(output, domain_groups, networks, generated_at, integration):
+def export(output, domain_groups, networks, generated_at):
     files, entries = {}, []
     for dataset in DATASETS:
         if dataset == 'cn-ip':
@@ -91,13 +91,10 @@ def export(output, domain_groups, networks, generated_at, integration):
         'datasets': entries,
         'helpers': [{'id': 'non-cn-ip', 'purpose': 'sing-box DNS answer filter only; not a routing dataset',
                      'path': helper, 'url': BASE_URL + helper, 'sha256': files[helper], 'entries': len(outside)}],
-        'integration': {'version': integration['version'], 'path': 'integration.json', 'url': BASE_URL + 'integration.json',
-                        'guide_url': BASE_URL + 'docs/UPDATES.md', 'full_templates': sorted(n for n in integration['content'] if n.startswith('examples/full/'))},
         'credentials_required': False, 'contains_nodes': False,
         'schemas': {'index': 'https://raw.githubusercontent.com/Heibai0502/agent-route/master/schemas/index.schema.json', 'manifest': 'https://raw.githubusercontent.com/Heibai0502/agent-route/master/schemas/manifest.schema.json'},
-        'sync_tool': {'path': 'scripts/sync_rules.py', 'minimum_python': '3.11', 'commands': ['sync', 'verify', 'status', 'rollback', 'check', 'ack'], 'edits_client_configuration': False},
+        'sync_tool': {'path': 'scripts/sync_rules.py', 'minimum_python': '3.11', 'commands': ['sync', 'verify', 'status', 'rollback'], 'edits_client_configuration': False},
         'validation_scope': {'mihomo': 'native_compile_and_config', 'sing-box': 'native_compile_and_config', 'surge': 'optional_local_check', 'shadowrocket': 'structure_only'},
-        'dns_configuration_included': False, 'webrtc_protection_included': False,
     }
     path = output / 'index.json'
     (path).write_bytes((json.dumps(index, ensure_ascii=False, indent=2) + '\n').encode("utf-8"))

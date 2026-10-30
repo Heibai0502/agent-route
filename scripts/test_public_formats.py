@@ -42,18 +42,14 @@ class PublicFormatTests(unittest.TestCase):
             self.assertEqual(size, total)
         self.assertFalse(any(a.overlaps(b) for a in inside for b in outside if a.version == b.version))
 
-    def test_release_is_self_contained(self):
+    def test_helper_is_published_and_indexed_outside_the_datasets(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             manifest = build(test_build_rules.SourceGenerationTests().fixture(), root)
             index = json.loads((root / 'index.json').read_text())
-            channel = json.loads((root / 'integration.json').read_text(encoding='utf-8'))
-            self.assertEqual(index['integration']['version'], channel['version'])
             self.assertEqual(index['helpers'][0]['sha256'], manifest['files']['sing-box/non-cn-ip.json'])
-            for name in channel['content'] + ['integration.json', 'sing-box/non-cn-ip.json']:
-                self.assertEqual(manifest['files'][name], hashlib.sha256((root / name).read_bytes()).hexdigest())
-            self.assertTrue(set(index['integration']['full_templates']) <= set(manifest['files']))
             self.assertEqual(len(index['datasets']), len(DATASETS))
+            self.assertFalse((root / 'docs').exists())
 
     def test_no_empty_sing_box_conditions(self):
         with tempfile.TemporaryDirectory() as folder:
