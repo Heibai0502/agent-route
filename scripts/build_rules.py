@@ -10,13 +10,10 @@ import time
 import urllib.request
 from public_formats import export
 
-SOURCES = {
-    'china_domains': 'https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt',
-    'foreign_domains': 'https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/proxy-list.txt',
-    'private_domains': 'https://raw.githubusercontent.com/Loyalsoldier/domain-list-custom/release/private.txt',
-    'china_ip': 'https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt',
-    'advertising_domains': 'https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/reject-list.txt',
-}
+ROOT = Path(__file__).resolve().parents[1]
+REGISTRY = json.loads((ROOT / 'sources.json').read_text(encoding='utf-8'))
+SOURCES = {key: 'https://raw.githubusercontent.com/' + value['repository'] + '/' + value['ref'] + '/' + value['path'] for key, value in REGISTRY['inputs'].items()}
+
 LOCAL_NETWORKS = [
     '0.0.0.0/8', '10.0.0.0/8', '100.64.0.0/10', '127.0.0.0/8',
     '169.254.0.0/16', '172.16.0.0/12', '192.168.0.0/16',
@@ -32,7 +29,8 @@ def fetch(url):
             with urllib.request.urlopen(request, timeout=30) as response:
                 limit = 16 * 1024 * 1024
                 data = response.read(limit + 1)
-                assert response.status == 200 and data
+                if not (response.status == 200 and data):
+                    raise ValueError('generation_inventory_invalid')
                 if len(data) > limit:
                     raise ValueError('rule_source_too_large')
                 return data.decode('utf-8')
@@ -56,7 +54,8 @@ def domains(text):
         if line.startswith('.'):
             line = line[1:]
             target = suffix
-        assert DOMAIN.fullmatch(line), 'invalid_domain_source_line'
+        if not (DOMAIN.fullmatch(line)):
+            raise ValueError('invalid_domain_source_line')
         target.add(line.lower())
     return exact, suffix
 
@@ -120,19 +119,23 @@ def private_domains(text):
     return exact, suffix
 
 
-def build(raw, output):
+def build(raw, output, versions=None):
     ad_exact, ad_suffix = advertising_domains(raw['advertising_domains'])
     exact, suffix = domains(raw['china_domains'])
-    assert len(exact) + len(suffix) > 1000, 'china_domain_dataset_empty_or_truncated'
+    if not (len(exact) + len(suffix) > 1000):
+        raise ValueError('china_domain_dataset_empty_or_truncated')
     foreign_exact, foreign_suffix = domains(raw['foreign_domains'])
-    assert len(foreign_exact) + len(foreign_suffix) > 1000, 'foreign_domain_dataset_empty_or_truncated'
+    if not (len(foreign_exact) + len(foreign_suffix) > 1000):
+        raise ValueError('foreign_domain_dataset_empty_or_truncated')
     before_domain_count = len(exact) + len(suffix)
     exact, suffix = exclude_foreign(exact, suffix, foreign_exact, foreign_suffix)
     excluded_count = before_domain_count - len(exact) - len(suffix)
-    assert not any(matches(domain, exact, suffix) for domain in
-                   ('www.gstatic.com', 'www.google.com', 'www.wikipedia.org', 'api.github.com')), 'foreign_domain_would_be_direct'
-    assert all(matches(domain, exact, suffix) for domain in
-               ('www.baidu.com', 'www.qq.com', 'www.taobao.com', 'www.jd.com')), 'domestic_domain_would_be_proxied'
+    if not (not any(matches(domain, exact, suffix) for domain in
+                   ('www.gstatic.com', 'www.google.com', 'www.wikipedia.org', 'api.github.com'))):
+        raise ValueError('foreign_domain_would_be_direct')
+    if not (all(matches(domain, exact, suffix) for domain in
+               ('www.baidu.com', 'www.qq.com', 'www.taobao.com', 'www.jd.com'))):
+        raise ValueError('domestic_domain_would_be_proxied')
     private_exact, private_suffix = private_domains(raw['private_domains'])
     exact.update(private_exact)
     suffix.update(private_suffix | {'local', 'lan', 'home.arpa'})
@@ -144,10 +147,12 @@ def build(raw, output):
         if not line or line.startswith('#'):
             continue
         network = ipaddress.ip_network(line, strict=False)
-        assert network.prefixlen != 0, 'universal_direct_route_forbidden'
+        if not (network.prefixlen != 0):
+            raise ValueError('universal_direct_route_forbidden')
         networks.add(str(network))
         china_network_count += 1
-    assert china_network_count > 1000, 'china_ip_dataset_empty_or_truncated'
+    if not (china_network_count > 1000):
+        raise ValueError('china_ip_dataset_empty_or_truncated')
     ordered_networks = sorted(networks, key=lambda n: (ipaddress.ip_network(n).version,
                                                       int(ipaddress.ip_network(n).network_address),
                                                       ipaddress.ip_network(n).prefixlen))
@@ -196,14 +201,34 @@ def build(raw, output):
         'public_formats_version': 1,
     }
     manifest['files'].update(public_files)
+    manifest['schema_version'] = 1
+    manifest['source_versions'] = versions or {}
+    manifest['skipped_syntax'] = {key: {kind: sum(line.strip().startswith(kind + ':') for line in text.splitlines()) for kind in ('regexp', 'keyword')} for key, text in raw.items() if key != 'china_ip'}
+    manifest['freshness_scope'] = 'this_publication_not_upstream_commit_age'
+    for name in ['sources.json', 'NOTICE.md'] + [copy['path'] for p in REGISTRY['projects'] for copy in p.get('license_copies', [])]:
+        data = (ROOT / name).read_bytes()
+        (output / name).parent.mkdir(parents=True, exist_ok=True)
+        (output / name).write_bytes(data)
+        manifest['files'][name] = hashlib.sha256(data).hexdigest()
     (output / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
-    assert {p.relative_to(output).as_posix() for p in output.rglob('*') if p.is_file()} == set(manifest['files']) | {'manifest.json'}
+    if not ({p.relative_to(output).as_posix() for p in output.rglob('*') if p.is_file()} == set(manifest['files']) | {'manifest.json'}):
+        raise ValueError('generation_inventory_invalid')
     return manifest
 
 
 def main():
-    raw = {name: fetch(url) for name, url in SOURCES.items()}
-    manifest = build(raw, Path('generated'))
+    heads, raw, versions = {}, {}, {}
+    for key, entry in REGISTRY['inputs'].items():
+        repo, ref = entry['repository'], entry['ref']
+        if (repo, ref) not in heads:
+            sha = json.loads(fetch('https://api.github.com/repos/' + repo + '/commits/' + ref))['sha']
+            if not re.fullmatch(r'[a-f0-9]{40}', sha): raise ValueError('invalid_upstream_sha')
+            heads[repo, ref] = sha
+        sha = heads[repo, ref]
+        url = 'https://raw.githubusercontent.com/' + repo + '/' + sha + '/' + entry['path']
+        raw[key] = fetch(url)
+        versions[key] = {'repository': repo, 'commit': sha, 'path': entry['path'], 'url': url}
+    manifest = build(raw, Path('generated'), versions)
     print(json.dumps(manifest['counts']))
 
 

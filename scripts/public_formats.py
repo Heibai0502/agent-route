@@ -70,6 +70,9 @@ def export(output, domain_groups, networks, generated_at):
         'order': ['user-and-node-exceptions', 'lan', *DATASETS, 'final-proxy'],
         'datasets': entries,
         'credentials_required': False, 'contains_nodes': False,
+        'schemas': {'index': 'https://raw.githubusercontent.com/Heibai0502/surge-rules/master/schemas/index.schema.json', 'manifest': 'https://raw.githubusercontent.com/Heibai0502/surge-rules/master/schemas/manifest.schema.json'},
+        'sync_tool': {'path': 'scripts/sync_rules.py', 'minimum_python': '3.11', 'commands': ['sync', 'verify', 'status', 'rollback'], 'edits_client_configuration': False},
+        'validation_scope': {'mihomo': 'native_compile_and_config', 'sing-box': 'native_compile_and_config', 'surge': 'optional_local_check', 'shadowrocket': 'structure_only'},
         'dns_configuration_included': False, 'webrtc_protection_included': False,
     }
     path = output / 'index.json'
