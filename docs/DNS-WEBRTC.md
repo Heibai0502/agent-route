@@ -1,6 +1,6 @@
 # DNS 与 WebRTC 防护：Agent 排查、修复与验收
 
-本指南与共享分流规则配套。**DNS 查询路径、普通连接路径、WebRTC 候选地址必须分别检查。** 规则列表不包含浏览器设置，安装扩展也不会替你配置 DNS。这里只提供公开方法，不代表维护者或阅读者的设备已经通过验收。参考资料核对日期：2026-10-30。
+本指南与共享分流规则配套。**DNS 查询路径、普通连接路径、WebRTC 候选地址必须分别检查。** 规则列表不包含浏览器设置，安装扩展也不会替你配置 DNS。这里只提供公开方法，不代表维护者或阅读者的设备已经通过验收。参考资料核对日期：2026-10-31。
 
 ## 1. 先记录目标和现场
 
@@ -36,27 +36,59 @@ DoH 加密查询与 DNS 经代理是两件事：直连 DoH 仍可让解析服务
 
 ## 3. 各客户端如何修复 DNS
 
+[examples/full/](../examples/full/) 已经写好了下面的做法，优先从模板合并，再按本节核对。每个字段的作用和踩过的坑如下，以便用户配置与模板不同时也能判断。
+
 ### Mihomo / Clash Meta
 
-1. 核对现有 `dns.enable`、`enhanced-mode`、`nameserver-policy`、`nameserver`、`fallback`、`respect-rules`、`proxy-server-nameserver`，不要新建第二段重复的 DNS 配置。
-2. 若采用 DNS 跟随路由，按当前内核文档设置 `respect-rules`，并保留独立的 `proxy-server-nameserver`，避免“解析节点必须先连上节点”的循环。
-3. 用 `nameserver-policy` 对接 `rule-set:sr-private`、`rule-set:sr-direct`、`rule-set:sr-proxy`；private 优先于重叠的公网规则。未知查询默认送海外解析器，海外 DoH 端点的连接明确匹配代理组。受控内网域名保留系统 / LAN 解析；使用 FakeIP 时检查内网域名的真实地址例外。
-4. 检查 `direct-nameserver` 等二次解析设置是否又把代理域名送到直连解析器。规则资源的 `proxy:` 只管下载文件，不能代替 DNS 出站策略。
-5. 使用 TUN 时另查 DNS 劫持和 IPv6 路由是否覆盖目标应用。只开系统 HTTP 代理通常不能接管所有应用的 UDP DNS。
+模板：[full/mihomo.yaml](../examples/full/mihomo.yaml)。先看现有的 `dns` 段，不要新建第二段。
+
+| 字段 | 作用 | 不这样做的后果 |
+| --- | --- | --- |
+| `respect-rules: true` | DNS 连接也走路由规则 | `1.1.1.1` 的查询可能直接从本地出口发出 |
+| `proxy-server-nameserver` | 只用来解析节点域名，这里走直连 | 官方要求与 `respect-rules` 配对；缺了会陷入“解析节点要先连上节点”的循环 |
+| `direct-nameserver` + `direct-nameserver-follow-policy: true` | 直连连接二次解析时仍按域名策略 | 内网域名可能被二次发到公网 DoH |
+| `nameserver-policy` 的 `rule-set:sr-private: [system]` | 内网域名走系统 DNS | 内网名查询外泄，或解析失败 |
+| `fake-ip-filter` 的 `rule-set:sr-private` | 内网域名拿真实地址 | 内网设备拿到 FakeIP，连不上 |
+| `sniffer` + `parse-pure-ip: true` | 从 TLS / HTTP / QUIC 里取回域名 | 只有 IP 的流量匹配不到域名规则，落到 cn-ip 或默认代理 |
+| 规则中的 DoH 地址（如 `IP-CIDR,1.1.1.1/32,PROXY,no-resolve`） | 明确每个解析器的路径 | 只写了首选、漏了备用时，备用解析器可能走错路 |
+
+使用 TUN 时另查 DNS 劫持和 IPv6 路由是否覆盖目标应用。只开系统 HTTP 代理通常不能接管所有应用的 UDP DNS。GUI 客户端的“DNS 覆写”“追加系统 DNS”会改变上面的策略，按模板配置时要关闭。规则资源的 `proxy:` 只管下载文件，不能代替 DNS 出站策略。
 
 字段定义以 [Mihomo DNS 文档](https://wiki.metacubex.one/config/dns/) 为准。旧 Clash 分支不要照搬新 Mihomo 的全部字段。
 
-### Surge / Shadowrocket
+### Surge
 
-保留现有系统 / LAN 解析能力；按目标版本支持的域名映射或加密 DNS 策略，把国内与海外查询分开。Surge 可参考 `[Host]` 的 `RULE-SET:` / `DOMAIN-SET:` 映射；每条映射能否指定多个解析器以该版本为准。海外 DoH 服务器的连接还要被代理规则接管。不要把中国 IP 兜底一律加上 `no-resolve`，否则尚未解析的域名可能跳过它。
+模板：[full/surge.conf](../examples/full/surge.conf)。
 
-Surge 文档：[本地 DNS 映射](https://manual.nssurge.com/dns/local-dns-mapping.html)、[规则选项](https://manual.nssurge.com/rules/overview.html)。Shadowrocket 的 DNS、IPv6 和资源刷新应在实际 iOS 版本核对，Surge 语法通过不能代替它的设备验收。
+- `[Host]` 用 `RULE-SET:地址 = server:解析器` 按名单分流查询（Mac 5.10.0+）。只有名单中的域名条目生效，自上而下首条命中。逗号分隔多个解析器需要 iOS 5.21.0+ / Mac 6.8.0+，所以模板只写首选。
+- **`encrypted-dns-follow-outbound-mode = true` 必须开。** 默认情况下加密 DNS 的连接始终走 DIRECT，不经过规则。
+- **开启后还有一个坑：** 如果匹配到的代理节点地址是域名，Surge 只记一条警告，这条 DNS 连接回退为 DIRECT。所以 `1.1.1.1` 对应的策略要指向 IP 地址的节点，并用 `surge-cli dns trace` 核实。
+- `always-real-ip` 让内网和节点域名拿真实地址。`hijack-dns = *:53` 让发往任意服务器的明文 DNS 也进入 Surge。
+- `.local` 用 `server:force-syslib` 才能走 mDNS；`server:system` 在增强模式下走的是单播 DNS。这个选项只给 `.local` 用，官方提示用于普通域名可能造成递归。
+- 不要给 cn-ip 加 `no-resolve`，否则尚未解析的域名会跳过它。
+
+依据：[本地 DNS 映射](https://manual.nssurge.com/dns/local-dns-mapping.html)、[加密 DNS](https://manual.nssurge.com/dns/encrypted-dns.html)、[高级 DNS](https://manual.nssurge.com/dns/advanced.html)、[规则选项](https://manual.nssurge.com/rules/overview.html)。
+
+### Shadowrocket
+
+模板：[full/shadowrocket.conf](../examples/full/shadowrocket.conf)，**只做过文本结构检查，未在实体 iOS 上验证**，要如实报告。不要照搬 Surge 的嵌套 `extended-matching`：Shadowrocket 会把这个后缀当成地址的一部分。多个 DoH 的写法、IPv6 和规则刷新都要在实际 App 版本上核对。
 
 ### sing-box
 
-公共 `sing-box/*.json` 是 source rule-set，不是 DNS 配置。用该内核支持的 DNS server、DNS rule 与 route rule 配置分别控制解析和连接；远端解析器显式指定用户的代理出站，private 用 local / mDNS 等适用的解析器，节点域名单独引导。
+模板：[full/sing-box.json](../examples/full/sing-box.json)，需要 1.14.0+。JSON 不能写注释，所以说明都放在这里。公共 `sing-box/*.json` 是规则集，不是 DNS 配置。
 
-共享的 `examples/sing-box.json` 仅提供路由规则；其 cn-ip 对已经有真实目的 IP 的连接有效。直接送入 SOCKS 的未知域名、FakeIP 或嗅探后的域名不保证自动触发同样的中国 IP 求值。如果要复制“未知答案全部是中国 IP 才直连”的效果，需要按实际内核版本实现 DNS 答案筛选，混合答案 / 失败保持代理；不要仅加一个 cn-ip 规则就声称完成。1.14 的 DNS 迁移字段与旧写法不同，先查 [DNS 规则](https://sing-box.sagernet.org/configuration/dns/rule/) 和 [迁移文档](https://sing-box.sagernet.org/migration/)，不要混用已弃用的字段。
+| 部分 | 作用 |
+| --- | --- |
+| `dns-local` 处理 private 和本地后缀 | 内网名不发到公网 DoH，也不拿 FakeIP |
+| 名单内域名的 A / AAAA 返回 `dns-fake` | 连接时还能还原出域名，由路由决定去向 |
+| `evaluate` → `match_response` + `sr-non-cn-ip` → `respond` | 未知域名先经代理查询；只要有一个答案不在中国就保持 FakeIP；全部在中国才返回真实地址 |
+| `{"port": 53, "action": "hijack-dns"}` | 把 DNS 流量交给 DNS 模块，需要 TUN 才能接管系统查询 |
+| 域名规则之后的两条 `sniff` | 没有域名的连接先嗅探，然后再过一遍域名规则 |
+| cn-ip 放在嗅探之后 | 裸 IP 只有在所有域名判断都做完后才按 IP 判断 |
+| `domain_resolver: dns-direct` | 直连出站和域名节点用它引导解析。每个域名节点都要加上 |
+| `store_fakeip: true` | 重启后保留映射，否则旧 FakeIP 连接会失败 |
+
+模板的 `dns-proxy` 只有一个上游，因为 1.14 每个服务器标签只绑定一个地址。字段以 [DNS 规则](https://sing-box.sagernet.org/configuration/dns/rule/)、[DNS 动作](https://sing-box.sagernet.org/configuration/dns/rule_action/) 和 [迁移文档](https://sing-box.sagernet.org/migration/) 为准，不要混用已弃用的写法。
 
 ## 4. 浏览器安全 DNS 与 IPv6
 
@@ -69,22 +101,80 @@ Surge 文档：[本地 DNS 映射](https://manual.nssurge.com/dns/local-dns-mapp
 
 浏览器与系统 DNS 选项以实际版本和用户策略为准，不直接编辑正在使用的浏览器内部数据库或以脚本覆盖企业管理设置。
 
+<a id="webrtc"></a>
+
 ## 5. WebRTC：使用 WebRTC Network Limiter
 
 WebRTC 会建立 ICE 候选并尝试音视频 / 数据连接。仅配置 HTTP(S) 代理时，某些 WebRTC UDP 路径可能不受它控制；完整 VPN / TUN 则要看 UDP、IPv6 与路由覆盖，不能笼统说 VPN 只代理网页流量。候选可能是本地 host 地址、STUN 获得的 srflx 地址或 TURN 的 relay 地址；这些类型本身不等于泄露，必须与预期出口比较。参见 [RFC 8828](https://www.rfc-editor.org/rfc/rfc8828.html)。
 
-按用户指定，Chrome / 支持该扩展的 Chromium 桌面浏览器使用 **WebRTC Network Limiter**：
+Chrome / 支持该扩展的 Chromium 桌面浏览器使用 **WebRTC Network Limiter**：
 
 1. 打开 [Chrome Web Store 官方条目](https://chromewebstore.google.com/detail/webrtc-network-limiter/npeicpdbkakmehahjeeohfdhnlpdklia)，核对名称、Google 开发者标识和扩展 ID `npeicpdbkakmehahjeeohfdhnlpdklia`，在目标浏览器配置档安装。
 2. 打开扩展的 **Options / 选项**，选择 **Disable non-proxied UDP**（禁用非代理 UDP），对应策略值 `disable_non_proxied_udp`。
 3. 保存并重新打开测试页面；重启浏览器后再检查选项仍然生效。按实际使用需要核对无痕模式中的扩展权限；另一个浏览器配置档不自动继承安装。
 4. 如果选项不能保存或被覆盖，检查扩展冲突、启用状态与企业策略。受管理策略限制时报告具体原因，不绕过组织控制。
 
+**接管方式不同，效果也不同，不要从选项名字推断结果。** Chrome 的 [API 文档](https://developer.chrome.com/docs/extensions/reference/api/privacy) 只列出 `disable_non_proxied_udp` 这个取值，没有说明没有配置代理时的行为。
+
+| 接管方式 | 要注意什么 |
+| --- | --- |
+| 系统或浏览器代理 | 浏览器能看到代理，这是该选项的主要场景。重点看 UDP 是否还有直连路径 |
+| TUN / 增强模式 | 浏览器看不到代理，流量由隧道接管。重点看 UDP 和 IPv6 是否真的进了隧道，以及通话是否还能用 |
+| 全隧道 VPN | 同 TUN。另查 VPN 是否覆盖 IPv6 |
+
+无论哪种方式，都以下面第 6 节的 ICE 候选和真实通话结果为准。
+
 官方条目说明，禁止非代理 UDP 并非安装后的默认配置，因此必须核对选项。它可能使实时通话改走较慢的路径或失败，需要做业务回归。[Chrome 隐私 API](https://developer.chrome.com/docs/extensions/reference/api/privacy) 定义了对应 IP handling policy。
 
 该扩展限制 WebRTC 网络路径，并不等于关闭所有 WebRTC 功能，也不保护其他浏览器、原生 App、DNS、定位权限、账号或 Cookie。手机 Chrome、Safari、Firefox 等不能直接按桌面 Chrome 扩展方案验收；不支持时标为待适配，不自动安装其他插件或禁用整套音视频功能。
 
+<a id="acceptance"></a>
+
 ## 6. 怎么验证，才算有证据
+
+### 验收表
+
+全程保持用户的代理开启。每项都要有实际输出作证据；没做的写“未验证”。
+
+| 项目 | 怎么测 | 通过标准 |
+| --- | --- | --- |
+| 规则加载 | 见下方命令 | 五类规则都已加载且条目数大于 0，与 [index.json](https://raw.githubusercontent.com/Heibai0502/agent-route/release/index.json) 的 `entries` 同一量级 |
+| 分流命中 | 用下面的样本逐个查 | 每个样本命中预期规则 |
+| 出口 | `curl -s https://www.cloudflare.com/cdn-cgi/trace` 看 `ip=` 和 `loc=` | 是所选节点的出口。IPv6 另用 `curl -6` 测，不通要说明原因 |
+| DNS 路径 | 见“DNS 验证” | 海外和未知查询到达经代理的解析器；private 不进公网 DNS |
+| WebRTC | 见“WebRTC 验证” | 候选中没有未授权的本地运营商公网地址，常用通话可用 |
+| 持久化 | 刷新一次订阅，并重启客户端 | 规则和 DNS 都还在 |
+
+分流样本：
+
+| 域名或地址 | 预期 |
+| --- | --- |
+| `www.baidu.com` | `direct` 名单，DIRECT |
+| `www.google.com` | `proxy` 名单，走用户的代理组 |
+| `doubleclick.net` | `reject` 名单，拒绝 |
+| `router.asus.com` | `private` 名单，DIRECT |
+| `114.114.114.114` | `cn-ip`，DIRECT |
+| `192.168.1.1` | LAN，DIRECT |
+| 用户自己的节点地址 | 节点例外，DIRECT |
+
+各客户端的查看方法：
+
+```sh
+# Mihomo：地址和密钥取自用户的 external-controller / secret，不要写进回复。
+curl -s -H "Authorization: Bearer $SECRET" http://127.0.0.1:9090/providers/rules   # ruleCount、updatedAt
+curl -s -H "Authorization: Bearer $SECRET" http://127.0.0.1:9090/connections       # 发出请求后看 rule、rulePayload、chains
+
+# Surge（Mac）：不产生真实连接就能看规则判断。
+surge-cli external-resource list
+surge-cli rule match www.google.com
+surge-cli rule explain www.google.com
+surge-cli dns lookup www.google.com
+surge-cli dns trace www.google.com
+
+# sing-box：短时调高日志级别，看 match[N] 行。例如 rule_set=sr-proxy => route(PROXY)。
+```
+
+Shadowrocket 没有上述工具，用 App 内的连接记录人工核对，并如实说明。
 
 ### DNS 验证
 
@@ -102,17 +192,21 @@ WebRTC 会建立 ICE 候选并尝试音视频 / 数据连接。仅配置 HTTP(S)
 4. host 候选显示 mDNS 名称不等于已证明公网地址隐藏；“没有候选”也可能是 STUN 不可达。网络失败、权限差异或单次页面空白都不能单独记作保护通过。
 5. 重新打开浏览器并复测，再用用户常用的音视频 / WebRTC 业务做功能回归。出现通话问题时记录影响，按用户选择回退该选项或研究受支持的代理 / TURN 路径，不静默放宽防护。
 
+<a id="report"></a>
+
 ## 7. Agent 交付格式
 
 ```text
 检查时间与环境：系统、浏览器配置档、核心版本
 规则来源：release commit SHA、manifest 时间、所用格式、哈希结果
+配置位置：改动放在哪里、刷新订阅后是否还在
 代理范围：系统代理 / TUN / VPN，IPv4 与 IPv6 各自覆盖情况
 DNS：国内 / 海外 / private / 未知查询的解析器与出站（脱敏）
 WebRTC：Network Limiter 的实际选项，重启后是否保持
 测试：普通网页出口、ICE 候选分类、音视频回归结果
 变更：修改了哪些字段，自己的节点和例外是否保留
 回退：对应配置前像与扩展原选项的恢复位置
+自动更新：已记录的版本号、检查任务的类型与时间、配置类更新是自动还是只通知
 未验证：移动端、无痕档、IPv6、其他 App、切网等未实际测试项
 ```
 

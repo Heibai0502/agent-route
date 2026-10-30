@@ -12,4 +12,37 @@ release 保持滚动历史，发布用预期旧 SHA 保护并发；任何验证�
 
 Mihomo/sing-box 原生验证可在 Linux CI 执行；Surge 是可选本机原生检查，Shadowrocket 仅文本结构检查。不得将这些结果写成实体 iOS、DNS/WebRTC 泄露或真实 VPN/TUN 流量已通过。
 
+## 发布模板与文档变更
+
+下游 Agent 靠 integration.json 的版本号发现变更。修改 `content` 列出的任何文件（AGENTS、CLIENTS、DNS-WEBRTC、SYNC、UPDATES、examples、sync_rules.py）时：
+
+1. `version` 加 1，在 `changes` 最前面加一条记录，版本必须连续。
+2. 重新计算 `content_sha256`：运行 `check_contracts.py`，错误信息会给出新值。没有更新时构建会失败，所以不会漏发。
+3. 选对类别，这决定下游会不会自动改配置：
+   - `docs`：只改文字，配置不变。
+   - `tool`：改了 sync_rules.py，且旧缓存和旧状态文件仍可用。
+   - `config`：模板在管理范围内有变化，旧配置继续可用。
+   - `breaking`：改了稳定地址或 `sr-` / `dns-` 标签，提高了最低版本，或超出管理范围。下游会停下来问用户。**拿不准就用这一类。**
+4. `summary` 和 `action` 说明改了什么、为什么，不写命令。下游按文件差异操作，文字只是帮助理解。
+
+新增模板后用 `validate_native.py` 跑一遍，再按需做隔离实测。
+
+规则数据的日常更新不需要改版本号，客户端会自己刷新。保持已发布地址稳定：下游的配置里写的就是这些地址。
+
+作为上游，维护账号的安全就是所有下游的安全：开启两步验证，保护 `master` 分支，不把写权限交给不受信任的自动化。
+
+## 构建与原生验证
+
+```sh
+python3 -B -m unittest discover -s scripts -p 'test_*.py'
+python3 -B scripts/check_contracts.py
+python3 -B scripts/build_rules.py
+# 需要 PyYAML 6.0.3，以及自己核验过的官方可执行文件：
+python3 -B scripts/validate_native.py --mihomo /path/to/mihomo --sing-box /path/to/sing-box
+```
+
+构建使用 Python 3.9+ 标准库，原生检查另外使用 PyYAML，同步工具需要 3.11+。无需项目密钥，勿使用 sudo。
+
+数据来源为 Loyalsoldier 的 [v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat)（direct / proxy / reject）、[domain-list-custom](https://github.com/Loyalsoldier/domain-list-custom)（private）与 [geoip](https://github.com/Loyalsoldier/geoip)（中国 IP）。固定 URL 和每次输入摘要写入 manifest；海外原文 `proxy-source.txt` 与国内冲突清洗来自同一批下载。保留本仓库 [GPL-3.0 LICENSE](../LICENSE) 和来源说明。
+
 提交问题请提供脱敏的环境、版本、generation、错误分类与复现步骤，不附节点密码、订阅令牌、浏览器 Cookie 或原始业务日志。

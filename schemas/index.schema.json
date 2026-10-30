@@ -7,7 +7,8 @@
     "scope",
     "generated_at_utc",
     "datasets",
-    "order"
+    "order",
+    "integration"
   ],
   "properties": {
     "schema_version": {
@@ -110,6 +111,53 @@
       "type": "array",
       "items": {
         "type": "string"
+      }
+    },
+    "helpers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "path",
+          "url",
+          "sha256",
+          "entries"
+        ]
+      }
+    },
+    "integration": {
+      "type": "object",
+      "required": [
+        "version",
+        "path",
+        "url",
+        "guide_url",
+        "full_templates"
+      ],
+      "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "path": {
+          "const": "integration.json"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "guide_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "full_templates": {
+          "type": "array",
+          "minItems": 4,
+          "items": {
+            "type": "string"
+          }
+        }
       }
     }
   }

@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 from build_rules import build
-from public_formats import DATASETS, public_china_networks
+from public_formats import DATASETS, outside_networks, public_china_networks
 import test_build_rules
 
 
@@ -33,6 +33,27 @@ class PublicFormatTests(unittest.TestCase):
             self.assertNotIn('192.168.', (root / 'surge/cn-ip.list').read_text())
             self.assertIn('DOMAIN-SUFFIX,asus.com', (root / 'surge/proxy.list').read_text())
             self.assertFalse(index['contains_nodes'])
+
+    def test_outside_networks_is_the_exact_complement(self):
+        inside = public_china_networks(['1.0.0.0/24', '2400::/32'], minimum=1)
+        outside = outside_networks(inside)
+        for version, total in ((4, 2 ** 32), (6, 2 ** 128)):
+            size = sum(n.num_addresses for n in inside + outside if n.version == version)
+            self.assertEqual(size, total)
+        self.assertFalse(any(a.overlaps(b) for a in inside for b in outside if a.version == b.version))
+
+    def test_release_is_self_contained(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            manifest = build(test_build_rules.SourceGenerationTests().fixture(), root)
+            index = json.loads((root / 'index.json').read_text())
+            channel = json.loads((root / 'integration.json').read_text(encoding='utf-8'))
+            self.assertEqual(index['integration']['version'], channel['version'])
+            self.assertEqual(index['helpers'][0]['sha256'], manifest['files']['sing-box/non-cn-ip.json'])
+            for name in channel['content'] + ['integration.json', 'sing-box/non-cn-ip.json']:
+                self.assertEqual(manifest['files'][name], hashlib.sha256((root / name).read_bytes()).hexdigest())
+            self.assertTrue(set(index['integration']['full_templates']) <= set(manifest['files']))
+            self.assertEqual(len(index['datasets']), len(DATASETS))
 
     def test_no_empty_sing_box_conditions(self):
         with tempfile.TemporaryDirectory() as folder:
