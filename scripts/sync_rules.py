@@ -13,7 +13,7 @@ import sys
 import tempfile
 import urllib.request
 
-REPO = 'Heibai0502/surge-rules'
+REPO = 'Heibai0502/agent-route'
 BASE = 'https://raw.githubusercontent.com/' + REPO + '/'
 LIMIT = 16 * 1024 * 1024
 FORMATS = {'mihomo': '.yaml', 'surge': '.list', 'sing-box': '.json'}
@@ -23,7 +23,7 @@ DIGEST = re.compile(r'^[a-f0-9]{64}$')
 
 
 def get(url):
-    with urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'shared-rules-sync/1'}), timeout=30) as r:
+    with urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'AgentRoute-sync/1'}), timeout=30) as r:
         if not r.url.startswith(('https://raw.githubusercontent.com/', 'https://api.github.com/')):
             raise ValueError('redirect_origin_rejected')
         data = r.read(LIMIT + 1)

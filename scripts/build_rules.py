@@ -25,7 +25,7 @@ DOMAIN = re.compile(r'^[-_a-zA-Z0-9]+(?:\.[-_a-zA-Z0-9]+)*$')
 def fetch(url):
     for attempt in range(3):
         try:
-            request = urllib.request.Request(url, headers={'User-Agent': 'vpsct-direct-rules-builder'})
+            request = urllib.request.Request(url, headers={'User-Agent': 'agentroute-rules-builder'})
             with urllib.request.urlopen(request, timeout=30) as response:
                 limit = 16 * 1024 * 1024
                 data = response.read(limit + 1)

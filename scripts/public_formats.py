@@ -3,7 +3,7 @@ import hashlib
 import ipaddress
 import json
 
-BASE_URL = 'https://raw.githubusercontent.com/Heibai0502/surge-rules/release/'
+BASE_URL = 'https://raw.githubusercontent.com/Heibai0502/agent-route/release/'
 DATASETS = ('private', 'reject', 'proxy', 'direct', 'cn-ip')
 FORMATS = {'surge': '.list', 'mihomo': '.yaml', 'sing-box': '.json'}
 LOCAL = tuple(map(ipaddress.ip_network, (
@@ -14,7 +14,7 @@ SYNTHETIC = tuple(map(ipaddress.ip_network, ('198.18.0.0/15', 'fc00::/18', 'fd00
 
 
 def public_china_networks(networks, minimum=1000):
-    """Match the existing VpsCT public-CN filter, without exporting its deployment."""
+    """Filter public China IP prefixes while excluding local and synthetic ranges."""
     result = []
     for value in networks:
         network = ipaddress.ip_network(value, strict=True)
@@ -64,13 +64,13 @@ def export(output, domain_groups, networks, generated_at):
         'schema_version': 1, 'scope': 'public_routing_data_only',
         'generated_at_utc': generated_at, 'base_url': BASE_URL,
         'manifest_url': BASE_URL + 'manifest.json',
-        'agent_guide_url': 'https://raw.githubusercontent.com/Heibai0502/surge-rules/master/AGENTS.md',
-        'privacy_guide_url': 'https://github.com/Heibai0502/surge-rules/blob/master/docs/DNS-WEBRTC.md',
+        'agent_guide_url': 'https://raw.githubusercontent.com/Heibai0502/agent-route/master/AGENTS.md',
+        'privacy_guide_url': 'https://github.com/Heibai0502/agent-route/blob/master/docs/DNS-WEBRTC.md',
         'update_interval_seconds': 86400, 'max_source_age_seconds': 172800,
         'order': ['user-and-node-exceptions', 'lan', *DATASETS, 'final-proxy'],
         'datasets': entries,
         'credentials_required': False, 'contains_nodes': False,
-        'schemas': {'index': 'https://raw.githubusercontent.com/Heibai0502/surge-rules/master/schemas/index.schema.json', 'manifest': 'https://raw.githubusercontent.com/Heibai0502/surge-rules/master/schemas/manifest.schema.json'},
+        'schemas': {'index': 'https://raw.githubusercontent.com/Heibai0502/agent-route/master/schemas/index.schema.json', 'manifest': 'https://raw.githubusercontent.com/Heibai0502/agent-route/master/schemas/manifest.schema.json'},
         'sync_tool': {'path': 'scripts/sync_rules.py', 'minimum_python': '3.11', 'commands': ['sync', 'verify', 'status', 'rollback'], 'edits_client_configuration': False},
         'validation_scope': {'mihomo': 'native_compile_and_config', 'sing-box': 'native_compile_and_config', 'surge': 'optional_local_check', 'shadowrocket': 'structure_only'},
         'dns_configuration_included': False, 'webrtc_protection_included': False,

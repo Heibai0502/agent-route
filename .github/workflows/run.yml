@@ -1,4 +1,4 @@
-name: Build verified routing and advertising rules
+name: AgentRoute verified rules
 
 on:
   workflow_dispatch:

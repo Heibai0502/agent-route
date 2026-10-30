@@ -1,10 +1,10 @@
-# 共享分流规则 · Shared Routing Rules
+# AgentRoute · 智能体分流规则
 
-[![自动构建](https://github.com/Heibai0502/surge-rules/actions/workflows/run.yml/badge.svg)](https://github.com/Heibai0502/surge-rules/actions/workflows/run.yml)
+[![自动构建](https://github.com/Heibai0502/agent-route/actions/workflows/run.yml/badge.svg)](https://github.com/Heibai0502/agent-route/actions/workflows/run.yml)
 
-同一批来源，输出 **Mihomo / Clash、Surge / Shadowrocket、sing-box** 原生规则格式。共用规则、各用自己的节点；公开读取不需要 GitHub token、VpsCT 账号或 API key。
+同一批来源，输出 **Mihomo / Clash、Surge / Shadowrocket、sing-box** 原生规则格式。共用规则、各用自己的节点；公开读取无需账号或 API key。
 
-**给其他 Agent：** 读取 [AGENTS.md](AGENTS.md)，按 [index.json](https://raw.githubusercontent.com/Heibai0502/surge-rules/release/index.json) 选择格式，并阅读 [DNS 与 WebRTC 防护指南](docs/DNS-WEBRTC.md)。不要把本仓库当作机场订阅导入。
+**给其他 Agent：** 读取 [AGENTS.md](AGENTS.md)，按 [index.json](https://raw.githubusercontent.com/Heibai0502/agent-route/release/index.json) 选择格式，并阅读 [DNS 与 WebRTC 防护指南](docs/DNS-WEBRTC.md)。不要把本仓库当作机场订阅导入。
 
 <a id="agent-prompt"></a>
 
@@ -13,14 +13,14 @@
 点击下面代码块右上角的复制按钮，将完整提示词发给自己的 Agent。它会读取本项目说明，使用你的节点接入规则，并检查 DNS 与 WebRTC 防护。
 
 ```markdown
-请在我的设备上接入 Heibai0502/surge-rules 共享分流规则，设置自动同步，保留我自己的节点，并检查、修复 DNS 和 WebRTC 防护。请实际完成配置、验证与交付。
+请在我的设备上接入 AgentRoute（Heibai0502/agent-route）分流规则，设置自动同步，保留我自己的节点，并检查、修复 DNS 和 WebRTC 防护。请实际完成配置、验证与交付。
 
 先阅读这些公开资料：
-- [Agent 接入说明](https://github.com/Heibai0502/surge-rules/blob/master/AGENTS.md)
-- [项目说明与客户端示例](https://github.com/Heibai0502/surge-rules)
-- [规则资源索引](https://raw.githubusercontent.com/Heibai0502/surge-rules/release/index.json)
-- [来源与校验清单](https://raw.githubusercontent.com/Heibai0502/surge-rules/release/manifest.json)
-- [DNS / WebRTC 排查修复指南](https://github.com/Heibai0502/surge-rules/blob/master/docs/DNS-WEBRTC.md)
+- [Agent 接入说明](https://github.com/Heibai0502/agent-route/blob/master/AGENTS.md)
+- [项目说明与客户端示例](https://github.com/Heibai0502/agent-route)
+- [规则资源索引](https://raw.githubusercontent.com/Heibai0502/agent-route/release/index.json)
+- [来源与校验清单](https://raw.githubusercontent.com/Heibai0502/agent-route/release/manifest.json)
+- [DNS / WebRTC 排查修复指南](https://github.com/Heibai0502/agent-route/blob/master/docs/DNS-WEBRTC.md)
 
 执行要求：
 
