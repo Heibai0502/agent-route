@@ -76,6 +76,6 @@ def export(output, domain_groups, networks, generated_at):
         'dns_configuration_included': False, 'webrtc_protection_included': False,
     }
     path = output / 'index.json'
-    path.write_text(json.dumps(index, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    path.write_bytes((json.dumps(index, ensure_ascii=False, indent=2) + '\n').encode("utf-8"))
     files['index.json'] = hashlib.sha256(path.read_bytes()).hexdigest()
     return files
