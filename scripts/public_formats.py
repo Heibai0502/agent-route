@@ -29,7 +29,22 @@ def public_china_networks(networks, minimum=1000):
     return sorted(result, key=lambda n: (n.version, int(n.network_address), n.prefixlen))
 
 
-def export(output, domain_groups, networks, generated_at):
+def outside_networks(networks):
+    """Everything except the China prefixes, so "every answer is in China" can be expressed."""
+    result = []
+    for version, cls, bits in ((4, ipaddress.IPv4Address, 32), (6, ipaddress.IPv6Address, 128)):
+        cursor = 0
+        for network in ipaddress.collapse_addresses(n for n in networks if n.version == version):
+            begin, end = int(network.network_address), int(network.broadcast_address)
+            if cursor < begin:
+                result.extend(ipaddress.summarize_address_range(cls(cursor), cls(begin - 1)))
+            cursor = max(cursor, end + 1)
+        if cursor < 2 ** bits:
+            result.extend(ipaddress.summarize_address_range(cls(cursor), cls(2 ** bits - 1)))
+    return sorted(result, key=lambda n: (n.version, int(n.network_address), n.prefixlen))
+
+
+def export(output, domain_groups, networks, generated_at, integration):
     files, entries = {}, []
     for dataset in DATASETS:
         if dataset == 'cn-ip':
@@ -60,6 +75,11 @@ def export(output, domain_groups, networks, generated_at):
                         'action': 'REJECT' if dataset == 'reject' else 'PROXY' if dataset == 'proxy' else 'DIRECT',
                         'mihomo_behavior': 'ipcidr' if dataset == 'cn-ip' else 'domain',
                         'resources': resources})
+    helper = 'sing-box/non-cn-ip.json'
+    outside = list(map(str, outside_networks(public_china_networks(networks))))
+    (output / helper).write_bytes((json.dumps({'version': 3, 'rules': [{'ip_cidr': outside}]},
+                                              separators=(',', ':')) + '\n').encode('utf-8'))
+    files[helper] = hashlib.sha256((output / helper).read_bytes()).hexdigest()
     index = {
         'schema_version': 1, 'scope': 'public_routing_data_only',
         'generated_at_utc': generated_at, 'base_url': BASE_URL,
@@ -69,9 +89,13 @@ def export(output, domain_groups, networks, generated_at):
         'update_interval_seconds': 86400, 'max_source_age_seconds': 172800,
         'order': ['user-and-node-exceptions', 'lan', *DATASETS, 'final-proxy'],
         'datasets': entries,
+        'helpers': [{'id': 'non-cn-ip', 'purpose': 'sing-box DNS answer filter only; not a routing dataset',
+                     'path': helper, 'url': BASE_URL + helper, 'sha256': files[helper], 'entries': len(outside)}],
+        'integration': {'version': integration['version'], 'path': 'integration.json', 'url': BASE_URL + 'integration.json',
+                        'guide_url': BASE_URL + 'docs/UPDATES.md', 'full_templates': sorted(n for n in integration['content'] if n.startswith('examples/full/'))},
         'credentials_required': False, 'contains_nodes': False,
         'schemas': {'index': 'https://raw.githubusercontent.com/Heibai0502/agent-route/master/schemas/index.schema.json', 'manifest': 'https://raw.githubusercontent.com/Heibai0502/agent-route/master/schemas/manifest.schema.json'},
-        'sync_tool': {'path': 'scripts/sync_rules.py', 'minimum_python': '3.11', 'commands': ['sync', 'verify', 'status', 'rollback'], 'edits_client_configuration': False},
+        'sync_tool': {'path': 'scripts/sync_rules.py', 'minimum_python': '3.11', 'commands': ['sync', 'verify', 'status', 'rollback', 'check', 'ack'], 'edits_client_configuration': False},
         'validation_scope': {'mihomo': 'native_compile_and_config', 'sing-box': 'native_compile_and_config', 'surge': 'optional_local_check', 'shadowrocket': 'structure_only'},
         'dns_configuration_included': False, 'webrtc_protection_included': False,
     }
