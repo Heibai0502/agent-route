@@ -1,0 +1,52 @@
+# Merge rule-providers and rules into your existing profile; this is NOT a subscription.
+# Replace PROXY with your existing proxy group. Keep your node/LAN/user exceptions first.
+rule-providers:
+  sr-private:
+    type: http
+    behavior: domain
+    format: yaml
+    url: https://raw.githubusercontent.com/Heibai0502/surge-rules/release/mihomo/private.yaml
+    path: ./rules/sr-private.yaml
+    interval: 86400
+    proxy: PROXY
+  sr-reject:
+    type: http
+    behavior: domain
+    format: yaml
+    url: https://raw.githubusercontent.com/Heibai0502/surge-rules/release/mihomo/reject.yaml
+    path: ./rules/sr-reject.yaml
+    interval: 86400
+    proxy: PROXY
+  sr-proxy:
+    type: http
+    behavior: domain
+    format: yaml
+    url: https://raw.githubusercontent.com/Heibai0502/surge-rules/release/mihomo/proxy.yaml
+    path: ./rules/sr-proxy.yaml
+    interval: 86400
+    proxy: PROXY
+  sr-direct:
+    type: http
+    behavior: domain
+    format: yaml
+    url: https://raw.githubusercontent.com/Heibai0502/surge-rules/release/mihomo/direct.yaml
+    path: ./rules/sr-direct.yaml
+    interval: 86400
+    proxy: PROXY
+  sr-cn-ip:
+    type: http
+    behavior: ipcidr
+    format: yaml
+    url: https://raw.githubusercontent.com/Heibai0502/surge-rules/release/mihomo/cn-ip.yaml
+    path: ./rules/sr-cn-ip.yaml
+    interval: 86400
+    proxy: PROXY
+rules:
+  # Insert AFTER your existing node/LAN/user exceptions, BEFORE your old final rule.
+  - RULE-SET,sr-private,DIRECT
+  - RULE-SET,sr-reject,REJECT
+  - RULE-SET,sr-proxy,PROXY
+  - RULE-SET,sr-direct,DIRECT
+  # Intentionally allow DNS resolution for the CN IP fallback.
+  - RULE-SET,sr-cn-ip,DIRECT
+  - MATCH,PROXY

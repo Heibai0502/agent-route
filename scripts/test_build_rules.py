@@ -11,7 +11,8 @@ from build_rules import build, private_domains
 
 class SourceGenerationTests(unittest.TestCase):
     def fixture(self):
-        base = int(ipaddress.ip_address('198.18.0.0'))
+        base = int(ipaddress.ip_address('1.0.0.0'))
+        ipv6 = int(ipaddress.ip_address('2400::'))
         return {
             'china_domains': '\n'.join(['domain:' + name for name in
                 ('baidu.com', 'qq.com', 'taobao.com', 'jd.com', 'asus.com')]
@@ -20,7 +21,8 @@ class SourceGenerationTests(unittest.TestCase):
                 ('google.com', 'gstatic.com', 'wikipedia.org', 'github.com', 'asus.com', 'ts.net')]
                 + ['full:foreign' + str(i) + '.example' for i in range(1001)]) + '\n',
             'private_domains': 'full:router.asus.com\ndomain:ts.net\ndomain:lan\n',
-            'china_ip': '\n'.join(str(ipaddress.ip_address(base + i)) + '/32' for i in range(1001)) + '\n',
+            'china_ip': '\n'.join([str(ipaddress.ip_address(base + i)) + '/32' for i in range(1001)]
+                                  + [str(ipaddress.ip_address(ipv6 + i)) + '/128' for i in range(1001)]) + '\n',
             'advertising_domains': '\n'.join(['domain:doubleclick.net']
                 + ['domain:ad' + str(i) + '.example' for i in range(1001)]) + '\n',
         }
@@ -34,7 +36,8 @@ class SourceGenerationTests(unittest.TestCase):
             self.assertEqual((output / 'private.domains').read_text(), 'router.asus.com\n.lan\n.ts.net\n')
             self.assertNotIn('.asus.com', (output / 'direct.domains').read_text().splitlines())
             self.assertIn('router.asus.com', (output / 'direct.domains').read_text().splitlines())
-            self.assertEqual(set(manifest['files']), {p.name for p in output.iterdir()} - {'manifest.json'})
+            self.assertEqual(set(manifest['files']),
+                             {p.relative_to(output).as_posix() for p in output.rglob('*') if p.is_file()} - {'manifest.json'})
             for name, digest in manifest['files'].items():
                 self.assertEqual(hashlib.sha256((output / name).read_bytes()).hexdigest(), digest)
             self.assertEqual(manifest['source_sha256']['foreign_domains'], manifest['files']['proxy-source.txt'])

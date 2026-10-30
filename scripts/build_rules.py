@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import time
 import urllib.request
+from public_formats import export
 
 SOURCES = {
     'china_domains': 'https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt',
@@ -174,8 +175,13 @@ def build(raw, output):
                                                 ['DOMAIN-SUFFIX,' + name for name in ad_suffix]) + '\n')
     ad_conditions = ([{'domain': ad_exact}] if ad_exact else []) + ([{'domain_suffix': ad_suffix}] if ad_suffix else [])
     (output / 'reject.json').write_text(json.dumps({'version': 3, 'rules': ad_conditions}, separators=(',', ':')) + '\n')
+    generated_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    public_files = export(output, {
+        'direct': (exact, suffix), 'proxy': (foreign_exact, foreign_suffix),
+        'private': (private_exact, private_suffix), 'reject': (ad_exact, ad_suffix),
+    }, ordered_networks, generated_at)
     manifest = {
-        'generated_at_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        'generated_at_utc': generated_at,
         'scope': 'domestic_direct_and_adblock', 'sources': SOURCES,
         'source_sha256': {name: hashlib.sha256(text.encode()).hexdigest() for name, text in raw.items()},
         'counts': {'exact_domains': len(exact), 'suffix_domains': len(suffix), 'ip_prefixes': len(networks),
@@ -187,11 +193,11 @@ def build(raw, output):
                                'reject.domains', 'reject.list', 'reject.json', 'private.domains', 'proxy-source.txt']},
         'application_or_country_groups_generated': False,
         'client_templates_generated': False,
+        'public_formats_version': 1,
     }
+    manifest['files'].update(public_files)
     (output / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
-    assert set(p.name for p in output.iterdir()) == {'direct.list', 'direct.json', 'direct.domains', 'direct.ipcidr',
-                                                  'reject.domains', 'reject.list', 'reject.json', 'manifest.json',
-                                                  'private.domains', 'proxy-source.txt'}
+    assert {p.relative_to(output).as_posix() for p in output.rglob('*') if p.is_file()} == set(manifest['files']) | {'manifest.json'}
     return manifest
 
 

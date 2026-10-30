@@ -7,7 +7,7 @@ on:
     - cron: '30 22 * * *'
   push:
     branches: [master]
-    paths: ['scripts/**', '.github/workflows/run.yml']
+    paths: ['scripts/**', 'examples/**', '.github/workflows/run.yml']
 
 permissions:
   contents: write
@@ -26,14 +26,30 @@ jobs:
         run: |
           python3 -B -m unittest discover -s scripts -p 'test_*.py'
           python3 scripts/build_rules.py
+      - name: Verify with pinned official native clients
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check 'PyYAML==6.0.3'
+          mkdir -p "$RUNNER_TEMP/rule-tools"
+          cd "$RUNNER_TEMP/rule-tools"
+          curl --fail --location --max-time 120 --output mihomo.gz https://github.com/MetaCubeX/mihomo/releases/download/v1.19.32/mihomo-linux-amd64-v1-v1.19.32.gz
+          echo '306f81e723e60ce6b828899a6fe83e1d00e9ecefb2dc8d4d849312a5bc00efdc  mihomo.gz' | sha256sum --check --strict
+          gzip -d mihomo.gz
+          chmod +x mihomo
+          curl --fail --location --max-time 120 --output sing-box.tar.gz https://github.com/SagerNet/sing-box/releases/download/v1.14.4/sing-box-1.14.4-linux-amd64.tar.gz
+          echo '699a1b510aa4396b2176d32d1181920399ebf1e267835da6f3b598d0f7c24968  sing-box.tar.gz' | sha256sum --check --strict
+          tar -xzf sing-box.tar.gz
+          cd "$GITHUB_WORKSPACE"
+          python3 -B scripts/validate_native.py --mihomo "$RUNNER_TEMP/rule-tools/mihomo" --sing-box "$RUNNER_TEMP/rule-tools/sing-box-1.14.4-linux-amd64/sing-box"
       - name: Publish only the validated dataset
         run: |
           publish_dir=$(mktemp -d)
           git worktree add --detach "$publish_dir" HEAD
           git -C "$publish_dir" switch --orphan direct-rules-release
-          cp generated/direct.list generated/direct.json generated/direct.domains generated/direct.ipcidr generated/reject.domains generated/reject.list generated/reject.json generated/private.domains generated/proxy-source.txt generated/manifest.json LICENSE "$publish_dir/"
+          cp -R generated/. "$publish_dir/"
+          cp LICENSE "$publish_dir/"
           git -C "$publish_dir" config user.name github-actions[bot]
           git -C "$publish_dir" config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git -C "$publish_dir" add direct.list direct.json direct.domains direct.ipcidr reject.domains reject.list reject.json private.domains proxy-source.txt manifest.json LICENSE
+          git -C "$publish_dir" add direct.list direct.json direct.domains direct.ipcidr reject.domains reject.list reject.json private.domains proxy-source.txt manifest.json index.json surge mihomo sing-box LICENSE
           git -C "$publish_dir" commit -m "Publish one validated routing-data generation"
           git -C "$publish_dir" push origin HEAD:release --force
