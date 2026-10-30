@@ -2,102 +2,58 @@
 
 [![自动构建](https://github.com/Heibai0502/agent-route/actions/workflows/run.yml/badge.svg)](https://github.com/Heibai0502/agent-route/actions/workflows/run.yml)
 
+**自动更新分流规则，用你自己的节点，交给 Agent 帮你接入。**
+
+[复制提示词](#agent-prompt) · [客户端接入](docs/CLIENTS.md) · [DNS / WebRTC 防护](docs/DNS-WEBRTC.md)
+
 <a id="about"></a>
 
-## 这是什么项目？
+## 有什么用？
 
-AgentRoute 是一个**自动更新、供大家共用的网络分流规则仓库**。
+AgentRoute 整理开源社区的**中国 IP、国内域名、海外域名、广告名单和内网域名**，转换成 Mihomo / Clash Meta、Surge / Shadowrocket、sing-box 可用的规则格式。
 
-我在 [Loyalsoldier](https://github.com/Loyalsoldier)、[v2fly](https://github.com/v2fly/domain-list-community)、[gaoyifan](https://github.com/gaoyifan/china-operator-ip) 等开源作者和社区成果的基础上，整理规则来源、处理名单冲突，转换成不同客户端能用的格式，并加上自动更新、校验和 Agent 接入说明。感谢这些项目的持续维护，完整来源与许可见 [上游署名](#上游项目与作者)和 [NOTICE](NOTICE.md)。
+默认示例用于**国内直连、海外走代理、过滤名单广告、保留内网访问**，你自己的明确例外优先。仓库每天计划更新，校验失败保留上一份有效数据；客户端接入后通常每 24 小时检查更新。
 
-## 自动更新什么？
+**节点由你自己提供。** 如果想使用美国等地区的出口，选择自己的对应节点即可；这里没有单独的美国 IP 直连名单，也不提供机场订阅。支持版本与各客户端差异见 [接入说明](docs/CLIENTS.md)。
 
-| 规则内容 | 默认示例中的用途 |
-| --- | --- |
-| 中国大陆 IPv4 / IPv6 地址段 | 为中国 IP 提供直连兜底 |
-| 国内域名 | 直接使用本地网络访问 |
-| 海外域名 | 使用你自己的代理节点访问 |
-| 内网和私有域名 | 保留路由器、局域网等本地访问 |
-| 广告域名 | 拦截名单中的广告请求 |
+<img src="assets/rules-overview.png" width="760" alt="AgentRoute 规则概览： 中国 IP 直连兜底、国内域名直连、广告名单拦截、海外域名代理、内网域名本地访问。数量为示意。">
 
-仓库每天计划自动更新，校验失败保留上一份有效规则。接入后，客户端通常每 24 小时检查更新；具体时间和规则优先级见 [接入说明](docs/CLIENTS.md)。
-
-## 直连、绕过中国、美国节点有什么区别？
-
-- **直连**：使用你当前的网络出口访问，不经过代理节点。
-- **绕过中国**：这里指国内流量绕过代理，按国内域名和中国 IP 规则直连；海外及其他未命中流量默认走代理。用户自己的明确例外优先。
-- **使用美国节点**：如果希望海外流量从美国出口访问，需要把代理策略指向你自己的美国节点或节点组。这仍然是代理访问。项目目前没有单独的美国 IP 直连名单；指定网站直连可由你或 Agent 添加本地例外，能否直连取决于你的网络。
-
-**节点由你自己提供**，例如已有机场订阅或自建节点。本项目提供的是规则与接入工具，不提供节点、账号或机场订阅，也不会自动替换你的节点。
-
-## 怎么使用？
-
-支持 **Mihomo / Clash Meta、Surge / Shadowrocket、sing-box**，公开读取无需账号或 API key。你可以参考示例接入，也可以直接把下面的提示词交给自己的 Agent，让它保留你的节点、配置自动同步，并按指南检查 DNS 和 WebRTC 防护。
-
-**给其他 Agent：** 读取 [AGENTS.md](AGENTS.md)，按 [index.json](https://raw.githubusercontent.com/Heibai0502/agent-route/release/index.json) 选择格式，并阅读 [DNS 与 WebRTC 防护指南](docs/DNS-WEBRTC.md)。不要把本仓库当作机场订阅导入。
+*根据示例截图优化的规则概览，非实时状态；数量以[最新发布清单](https://raw.githubusercontent.com/Heibai0502/agent-route/release/manifest.json)为准。*
 
 <a id="agent-prompt"></a>
 
 ## 复制给自己的 Agent
 
-点击下面代码块右上角的复制按钮，将完整提示词发给自己的 Agent。它会读取本项目说明，使用你的节点接入规则，并检查 DNS 与 WebRTC 防护。
+复制下面整段提示词，让 Agent 根据你的设备和现有配置完成接入。需要手动操作时，它应明确告诉你具体步骤。
 
-```markdown
-请在我的设备上接入 AgentRoute（Heibai0502/agent-route）分流规则，设置自动同步，保留我自己的节点，并检查、修复 DNS 和 WebRTC 防护。请实际完成配置、验证与交付。
+```text
+请帮我接入 AgentRoute：
+https://github.com/Heibai0502/agent-route
 
-先阅读这些公开资料：
-- [Agent 接入说明](https://github.com/Heibai0502/agent-route/blob/master/AGENTS.md)
-- [项目说明与客户端示例](https://github.com/Heibai0502/agent-route)
-- [规则资源索引](https://raw.githubusercontent.com/Heibai0502/agent-route/release/index.json)
-- [来源与校验清单](https://raw.githubusercontent.com/Heibai0502/agent-route/release/manifest.json)
-- [DNS / WebRTC 排查修复指南](https://github.com/Heibai0502/agent-route/blob/master/docs/DNS-WEBRTC.md)
+先阅读仓库的 AGENTS.md、docs/SYNC.md、docs/CLIENTS.md 和 docs/DNS-WEBRTC.md，再按以下要求实际配置并验证：
 
-执行要求：
+1. 识别我的系统、代理客户端及核心版本、浏览器配置档、DNS、IPv6 和代理/TUN 状态；备份将修改的配置，缺少关键信息时再问我。
 
-1. 先识别我的操作系统、代理客户端、实际核心版本、浏览器配置档，以及当前系统代理/TUN、DNS 和 IPv6 状态。修改前保存必要的配置备份；缺少关键环境信息时再询问我。
+2. 保留我的节点、订阅、认证信息、代理组成员、当前选择、LAN 和明确例外。选择兼容的规则格式，将 PROXY/DIRECT 映射到我的实际策略，只合并必要内容，不能用示例覆盖整份配置。不要索取项目维护者的密钥。
 
-2. 保留我的节点、机场订阅、认证信息、代理组成员、当前节点选择和已有明确例外。将示例中的 PROXY/DIRECT 映射到我的实际策略或出站名称。只合并需要的规则与设置，不用示例片段覆盖完整配置，不索取规则维护者的任何密钥。
+3. 按文档配置规则优先级和约 24 小时自动刷新，并确认资源已加载。需要严格同代同步时，使用仓库工具固定 release SHA、校验清单后整批应用；失败保留上一有效版本。下载成功不等于客户端已更新。
 
-3. 根据客户端选择匹配的原生规则格式。规则顺序保持：
-   我的节点与明确例外 → LAN → private → reject → proxy → direct → cn-ip → 默认代理。
-   保留唯一的最终规则，区分精确域名与后缀；广告白名单不能导致原本需要代理的网站被改成直连。
+4. 检查并修复 DNS：内网本地解析，国内按预期直连解析，海外和未知域名的解析经过我的代理；节点域名单独引导。核对浏览器安全 DNS、备用解析器、FakeIP 和 IPv6，不能把 DoH 加密等同于已走代理，也不能静默添加直连或明文回退。
 
-4. 优先使用客户端原生远程规则功能，设置约每 24 小时自动刷新。确认刷新配置已保存且资源成功加载。如果由脚本或 Agent 自行同步，固定同一个 release commit SHA，按 manifest 校验文件，整批验证成功后再替换；失败保留上一有效版本。不要仅下载一次静态文件就宣称已实现自动同步。
+5. 支持扩展的 Chrome/Chromium 使用 Google 的 WebRTC Network Limiter，选择 Disable non-proxied UDP（disable_non_proxied_udp），核对当前配置档及重启后保持。遇到不支持的浏览器、安装交互或企业策略限制，说明具体情况，不绕过限制。
 
-5. 检查并修复 DNS 路径：private/LAN 使用适用的本地解析；国内域名按预期直连解析；海外和未知域名使用经过我自己的代理出站的解析器。节点域名需要独立、可用的引导解析，避免循环依赖。检查浏览器安全 DNS、备用解析器、二次解析、FakeIP 和 IPv6 是否绕过预期策略。DoH 加密不等于 DNS 已经走代理；失败时不要静默添加直连或明文回退。
-
-6. WebRTC 使用 Google 发布的 WebRTC Network Limiter。对于支持该扩展的 Chrome/Chromium 桌面浏览器，核对官方来源，在实际使用的配置档中安装或检查，并选择：
-   Disable non-proxied UDP
-   对应策略值：disable_non_proxied_udp。
-   确认设置保存、重新打开浏览器后仍有效，并按实际使用情况检查无痕权限与扩展冲突。若浏览器不支持或受到企业策略限制，说明具体限制和待处理步骤，不绕过管理策略。
-
-7. 分别验证规则加载、普通网页代理出口、国内/海外/private/未知域名的 DNS 路径，以及 IPv4/IPv6 和 WebRTC ICE 候选。不要关闭我正在使用的代理来做对照。安装扩展、只看到 mDNS 名称、没有 ICE 候选或检测页面空白，都不能单独作为“没有泄露”的证据。检查防护设置是否影响常用音视频功能。
-
-8. 完成后给我简洁报告：修改了什么、使用的规则版本与生成时间、自动刷新方式、我的节点与选择是否保留、DNS/WebRTC 实际验证结果、备份和回退位置，以及尚未验证的范围。无法实测的项目明确标注，不把配置检查当作真实设备验收。
+6. 保持我现用的代理开启，分别验证规则加载、网页出口、DNS、IPv4/IPv6、WebRTC ICE 候选和必要的音视频功能。没有候选或检测页空白不代表没有泄露。最后说明改动、规则版本、刷新方式、验证结果、回退位置和未验证事项。
 ```
 
-## Agent 机器接口
+## 详细文档
 
-- [同步、校验、状态与回退](docs/SYNC.md)
-- [客户端格式与规则优先级](docs/CLIENTS.md)
-- [维护与验证](docs/MAINTAINING.md)
-- [完整来源与许可声明](NOTICE.md) / [机器可读来源登记](sources.json)
+- [Agent 接入入口](AGENTS.md)：读取顺序、执行步骤与验收要求。
+- [同步与回退工具](docs/SYNC.md)：sync / verify / status / rollback。
+- [规则索引](https://raw.githubusercontent.com/Heibai0502/agent-route/release/index.json)：各客户端的资源地址与校验信息。
+- [维护说明](docs/MAINTAINING.md)：构建、测试与发布流程。
 
-## 上游项目与作者
+## 开源来源与致谢
 
-- [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules) (historical); GPL-3.0
-- [Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat) (direct); GPL-3.0
-- [Loyalsoldier/domain-list-custom](https://github.com/Loyalsoldier/domain-list-custom) (direct); MIT
-- [Loyalsoldier/geoip](https://github.com/Loyalsoldier/geoip) (direct); CC-BY-SA-4.0, GPL-3.0
-- [v2fly/domain-list-community](https://github.com/v2fly/domain-list-community) (indirect)
-- [felixonmars/dnsmasq-china-list](https://github.com/felixonmars/dnsmasq-china-list) (indirect)
-- [gaoyifan/china-operator-ip](https://github.com/gaoyifan/china-operator-ip) (indirect)
-- [gfwlist/gfwlist](https://github.com/gfwlist/gfwlist) (indirect)
-- [cokebar/gfwlist2dnsmasq](https://github.com/cokebar/gfwlist2dnsmasq) (indirect)
-- [easylist/easylist](https://github.com/easylist/easylist) (indirect)
-- [easylist/easylistchina](https://github.com/easylist/easylistchina) (indirect)
-- [AdguardTeam/AdGuardSDNSFilter](https://github.com/AdguardTeam/AdGuardSDNSFilter) (indirect)
-- [Peter Lowe](https://pgl.yoyo.org/adservers/) (indirect)
-- [Dan Pollock](https://someonewhocares.org/hosts/) (indirect)
+本项目基于 [Loyalsoldier](https://github.com/Loyalsoldier)、[v2fly](https://github.com/v2fly/domain-list-community)、[gaoyifan](https://github.com/gaoyifan/china-operator-ip) 等作者和社区的成果，增加来源整理、冲突处理、格式转换、自动校验及 Agent 接入工具。
 
-本项目许可证不替代各上游声明，详见 NOTICE 与保留的许可原文。
+完整上游项目、贡献者、许可声明和原文见 [NOTICE](NOTICE.md)、[sources.json](sources.json) 与 [licenses](licenses/)。本项目的 [LICENSE](LICENSE) 不替代上游各自的许可声明。
