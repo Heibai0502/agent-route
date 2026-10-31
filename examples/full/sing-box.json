@@ -28,12 +28,12 @@
     "auto_detect_interface": true,
     "default_domain_resolver": "dns-proxy",
     "rule_set": [
-      {"type": "remote", "tag": "sr-private", "format": "source", "url": "https://raw.githubusercontent.com/Heibai0502/agent-route/release/sing-box/private.json", "http_client": {"detour": "PROXY"}, "update_interval": "24h"},
-      {"type": "remote", "tag": "sr-reject", "format": "source", "url": "https://raw.githubusercontent.com/Heibai0502/agent-route/release/sing-box/reject.json", "http_client": {"detour": "PROXY"}, "update_interval": "24h"},
-      {"type": "remote", "tag": "sr-proxy", "format": "source", "url": "https://raw.githubusercontent.com/Heibai0502/agent-route/release/sing-box/proxy.json", "http_client": {"detour": "PROXY"}, "update_interval": "24h"},
-      {"type": "remote", "tag": "sr-direct", "format": "source", "url": "https://raw.githubusercontent.com/Heibai0502/agent-route/release/sing-box/direct.json", "http_client": {"detour": "PROXY"}, "update_interval": "24h"},
-      {"type": "remote", "tag": "sr-cn-ip", "format": "source", "url": "https://raw.githubusercontent.com/Heibai0502/agent-route/release/sing-box/cn-ip.json", "http_client": {"detour": "PROXY"}, "update_interval": "24h"},
-      {"type": "remote", "tag": "sr-non-cn-ip", "format": "source", "url": "https://raw.githubusercontent.com/Heibai0502/agent-route/release/sing-box/non-cn-ip.json", "http_client": {"detour": "PROXY"}, "update_interval": "24h"}
+      {"type": "remote", "tag": "sr-private", "format": "source", "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/private.json", "http_client": {"detour": "PROXY"}, "update_interval": "24h"},
+      {"type": "remote", "tag": "sr-reject", "format": "source", "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/reject.json", "http_client": {"detour": "PROXY"}, "update_interval": "24h"},
+      {"type": "remote", "tag": "sr-proxy", "format": "source", "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/proxy.json", "http_client": {"detour": "PROXY"}, "update_interval": "24h"},
+      {"type": "remote", "tag": "sr-direct", "format": "source", "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/direct.json", "http_client": {"detour": "PROXY"}, "update_interval": "24h"},
+      {"type": "remote", "tag": "sr-cn-ip", "format": "source", "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/cn-ip.json", "http_client": {"detour": "PROXY"}, "update_interval": "24h"},
+      {"type": "remote", "tag": "sr-non-cn-ip", "format": "source", "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/non-cn-ip.json", "http_client": {"detour": "PROXY"}, "update_interval": "24h"}
     ],
     "rules": [
       {"port": 53, "action": "hijack-dns"},

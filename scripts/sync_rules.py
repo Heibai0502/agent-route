@@ -13,7 +13,7 @@ import sys
 import tempfile
 import urllib.request
 
-REPO = 'Heibai0502/agent-route'
+REPO = 'ryuu-restart/agent-route'
 BASE = 'https://raw.githubusercontent.com/' + REPO + '/'
 LIMIT = 16 * 1024 * 1024
 FORMATS = {'mihomo': '.yaml', 'surge': '.list', 'sing-box': '.json'}
