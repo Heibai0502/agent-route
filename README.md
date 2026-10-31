@@ -1,6 +1,6 @@
 # AgentRoute · 智能体分流规则
 
-[![自动构建](https://github.com/Heibai0502/agent-route/actions/workflows/run.yml/badge.svg)](https://github.com/Heibai0502/agent-route/actions/workflows/run.yml)
+[![自动构建](https://github.com/ryuu-restart/agent-route/actions/workflows/run.yml/badge.svg)](https://github.com/ryuu-restart/agent-route/actions/workflows/run.yml)
 
 **自动更新分流规则，用你自己的节点，交给 Agent 帮你接入。**
 
@@ -16,7 +16,7 @@
 
 <img src="assets/rules-overview.jpg" width="760" alt="AgentRoute 规则概览： 中国 IP 直连兜底、国内域名直连、广告名单拦截、海外域名代理、内网域名本地访问。数量为示意。">
 
-*数量为示意，以[最新发布清单](https://raw.githubusercontent.com/Heibai0502/agent-route/release/manifest.json)为准。*
+*数量为示意，以[最新发布清单](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/manifest.json)为准。*
 
 ## 开始前要准备
 
@@ -32,12 +32,12 @@
 
 ```text
 请帮我接入 AgentRoute：
-https://github.com/Heibai0502/agent-route
+https://github.com/ryuu-restart/agent-route
 
 先读下面三份文档，它们是完整流程，这段话只是摘要，有差异时以文档为准：
-https://raw.githubusercontent.com/Heibai0502/agent-route/master/AGENTS.md
-https://raw.githubusercontent.com/Heibai0502/agent-route/master/docs/CLIENTS.md
-https://raw.githubusercontent.com/Heibai0502/agent-route/master/docs/DNS-WEBRTC.md
+https://raw.githubusercontent.com/ryuu-restart/agent-route/master/AGENTS.md
+https://raw.githubusercontent.com/ryuu-restart/agent-route/master/docs/CLIENTS.md
+https://raw.githubusercontent.com/ryuu-restart/agent-route/master/docs/DNS-WEBRTC.md
 
 按顺序做，一步完成后再进入下一步：
 
@@ -68,7 +68,7 @@ https://raw.githubusercontent.com/Heibai0502/agent-route/master/docs/DNS-WEBRTC.
 
 ## 记得经常更新
 
-这个项目会持续更新，不要用一次就再也不管了。规则名单在客户端里通常会自动刷新，模板和说明的变化要自己跟进，可以看[提交记录](https://github.com/Heibai0502/agent-route/commits/master)。
+这个项目会持续更新，不要用一次就再也不管了。规则名单在客户端里通常会自动刷新，模板和说明的变化要自己跟进，可以看[提交记录](https://github.com/ryuu-restart/agent-route/commits/master)。
 
 怎么跟进由你决定，让你的 Agent 按你的环境来做：拉分支自动同步、部署到 VPS 定期拉取，或者定期手动更新。
 
@@ -78,7 +78,7 @@ https://raw.githubusercontent.com/Heibai0502/agent-route/master/docs/DNS-WEBRTC.
 - [客户端接入](docs/CLIENTS.md)：选模板、改动放哪里、各客户端差异。
 - [DNS / WebRTC 防护](docs/DNS-WEBRTC.md)：修复方法和验收命令。
 - [同步与回退工具](docs/SYNC.md)：sync / verify / status / rollback。
-- [规则索引](https://raw.githubusercontent.com/Heibai0502/agent-route/release/index.json)：各客户端的资源地址与校验信息。
+- [规则索引](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/index.json)：各客户端的资源地址与校验信息。
 - [维护说明](docs/MAINTAINING.md)：构建、测试与发布流程。
 
 ## 开源来源与致谢

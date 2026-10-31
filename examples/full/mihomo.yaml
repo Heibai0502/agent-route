@@ -77,7 +77,7 @@ rule-providers:
     type: http
     behavior: domain
     format: yaml
-    url: https://raw.githubusercontent.com/Heibai0502/agent-route/release/mihomo/private.yaml
+    url: https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/private.yaml
     path: ./rules/sr-private.yaml
     interval: 86400
     proxy: PROXY
@@ -85,7 +85,7 @@ rule-providers:
     type: http
     behavior: domain
     format: yaml
-    url: https://raw.githubusercontent.com/Heibai0502/agent-route/release/mihomo/reject.yaml
+    url: https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/reject.yaml
     path: ./rules/sr-reject.yaml
     interval: 86400
     proxy: PROXY
@@ -93,7 +93,7 @@ rule-providers:
     type: http
     behavior: domain
     format: yaml
-    url: https://raw.githubusercontent.com/Heibai0502/agent-route/release/mihomo/proxy.yaml
+    url: https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/proxy.yaml
     path: ./rules/sr-proxy.yaml
     interval: 86400
     proxy: PROXY
@@ -101,7 +101,7 @@ rule-providers:
     type: http
     behavior: domain
     format: yaml
-    url: https://raw.githubusercontent.com/Heibai0502/agent-route/release/mihomo/direct.yaml
+    url: https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/direct.yaml
     path: ./rules/sr-direct.yaml
     interval: 86400
     proxy: PROXY
@@ -109,7 +109,7 @@ rule-providers:
     type: http
     behavior: ipcidr
     format: yaml
-    url: https://raw.githubusercontent.com/Heibai0502/agent-route/release/mihomo/cn-ip.yaml
+    url: https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/cn-ip.yaml
     path: ./rules/sr-cn-ip.yaml
     interval: 86400
     proxy: PROXY

@@ -95,17 +95,17 @@
 
 ## 稳定资源地址
 
-基础地址为 `https://raw.githubusercontent.com/Heibai0502/agent-route/release/`，全部公开，无需凭据。
+基础地址为 `https://raw.githubusercontent.com/ryuu-restart/agent-route/release/`，全部公开，无需凭据。
 
 | 规则 | 动作 | Surge / Shadowrocket | Mihomo | sing-box |
 | --- | --- | --- | --- | --- |
-| 私有 / 内网域名 | DIRECT | [private.list](https://raw.githubusercontent.com/Heibai0502/agent-route/release/surge/private.list) | [private.yaml](https://raw.githubusercontent.com/Heibai0502/agent-route/release/mihomo/private.yaml) | [private.json](https://raw.githubusercontent.com/Heibai0502/agent-route/release/sing-box/private.json) |
-| 广告域名 | REJECT | [reject.list](https://raw.githubusercontent.com/Heibai0502/agent-route/release/surge/reject.list) | [reject.yaml](https://raw.githubusercontent.com/Heibai0502/agent-route/release/mihomo/reject.yaml) | [reject.json](https://raw.githubusercontent.com/Heibai0502/agent-route/release/sing-box/reject.json) |
-| 海外域名 | 自己的 PROXY | [proxy.list](https://raw.githubusercontent.com/Heibai0502/agent-route/release/surge/proxy.list) | [proxy.yaml](https://raw.githubusercontent.com/Heibai0502/agent-route/release/mihomo/proxy.yaml) | [proxy.json](https://raw.githubusercontent.com/Heibai0502/agent-route/release/sing-box/proxy.json) |
-| 国内域名 | DIRECT | [direct.list](https://raw.githubusercontent.com/Heibai0502/agent-route/release/surge/direct.list) | [direct.yaml](https://raw.githubusercontent.com/Heibai0502/agent-route/release/mihomo/direct.yaml) | [direct.json](https://raw.githubusercontent.com/Heibai0502/agent-route/release/sing-box/direct.json) |
-| 中国 IPv4 / IPv6 | DIRECT 兜底 | [cn-ip.list](https://raw.githubusercontent.com/Heibai0502/agent-route/release/surge/cn-ip.list) | [cn-ip.yaml](https://raw.githubusercontent.com/Heibai0502/agent-route/release/mihomo/cn-ip.yaml) | [cn-ip.json](https://raw.githubusercontent.com/Heibai0502/agent-route/release/sing-box/cn-ip.json) |
+| 私有 / 内网域名 | DIRECT | [private.list](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/surge/private.list) | [private.yaml](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/private.yaml) | [private.json](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/private.json) |
+| 广告域名 | REJECT | [reject.list](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/surge/reject.list) | [reject.yaml](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/reject.yaml) | [reject.json](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/reject.json) |
+| 海外域名 | 自己的 PROXY | [proxy.list](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/surge/proxy.list) | [proxy.yaml](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/proxy.yaml) | [proxy.json](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/proxy.json) |
+| 国内域名 | DIRECT | [direct.list](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/surge/direct.list) | [direct.yaml](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/direct.yaml) | [direct.json](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/direct.json) |
+| 中国 IPv4 / IPv6 | DIRECT 兜底 | [cn-ip.list](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/surge/cn-ip.list) | [cn-ip.yaml](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/cn-ip.yaml) | [cn-ip.json](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/cn-ip.json) |
 
-机器入口：[index.json](https://raw.githubusercontent.com/Heibai0502/agent-route/release/index.json)；同批时间、来源及 SHA-256：[manifest.json](https://raw.githubusercontent.com/Heibai0502/agent-route/release/manifest.json)。`index.json` 是本项目版本化的索引，不是客户端配置或通用标准协议。
+机器入口：[index.json](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/index.json)；同批时间、来源及 SHA-256：[manifest.json](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/manifest.json)。`index.json` 是本项目版本化的索引，不是客户端配置或通用标准协议。
 
 规则下载默认经 `PROXY`：`raw.githubusercontent.com` 在部分网络无法直连。代理不可用时，客户端继续使用已缓存的上一份规则。
 

@@ -129,7 +129,7 @@ Chrome / 支持该扩展的 Chromium 桌面浏览器使用 **WebRTC Network Limi
 
 | 项目 | 怎么测 | 通过标准 |
 | --- | --- | --- |
-| 规则加载 | 见下方命令 | 五类规则都已加载且条目数大于 0，与 [index.json](https://raw.githubusercontent.com/Heibai0502/agent-route/release/index.json) 的 `entries` 同一量级 |
+| 规则加载 | 见下方命令 | 五类规则都已加载且条目数大于 0，与 [index.json](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/index.json) 的 `entries` 同一量级 |
 | 分流命中 | 用下面的样本逐个查 | 每个样本命中预期规则 |
 | 出口 | `curl -s https://www.cloudflare.com/cdn-cgi/trace` 看 `ip=` 和 `loc=` | 是所选节点的出口。IPv6 另用 `curl -6` 测，不通要说明原因 |
 | DNS 路径 | 见“DNS 验证” | 海外和未知查询到达经代理的解析器；private 不进公网 DNS |

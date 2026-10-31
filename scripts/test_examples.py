@@ -100,6 +100,8 @@ class PublishedTextTests(unittest.TestCase):
             text = (ROOT / name).read_text(encoding='utf-8')
             with self.subTest(name=name):
                 self.assertNotRegex(text, '按用户(要求|指定)')
+                # A released GitHub name can be registered by anyone, so it must never be read from again.
+                self.assertNotIn('heibai0502', text.lower())
                 tokens = re.findall(r'[A-Za-z0-9][A-Za-z0-9.-]+', text)
                 self.assertFalse({hashlib.sha256(t.lower().encode()).hexdigest() for t in tokens} & PRIVATE_TOKENS)
 
